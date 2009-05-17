@@ -4,8 +4,10 @@
  *  JZ4740 common definition.
  *
  *  Copyright (C) 2006 - 2007 Ingenic Semiconductor Inc.
+ *  Copyright (C) 2009        Ignacio Garcia Perez <iggarpe@gmail.com>
  *
- *  Author: <lhhuang@ingenic.cn>
+ *  Author:   <lhhuang@ingenic.cn>
+ *  Modified: <iggarpe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -23,6 +25,10 @@
 /*------------------------------------------------------------------
  * Platform definitions
  */
+#ifdef CONFIG_JZ4740_A320
+#include <asm/mach-jz4740/board-a320.h>
+#endif
+
 #ifdef CONFIG_JZ4740_PAVO
 #include <asm/mach-jz4740/board-pavo.h>
 #endif

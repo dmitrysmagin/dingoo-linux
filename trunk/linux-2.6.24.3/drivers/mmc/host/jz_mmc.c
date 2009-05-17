@@ -2,6 +2,10 @@
  *  linux/drivers/mmc/jz_mmc.c - JZ SD/MMC driver
  *
  *  Copyright (C) 2005 - 2008 Ingenic Semiconductor Inc.
+ *  Copyright (C) 2009        Ignacio Garica Perez <iggarpe@gmail.com>
+ *
+ *  Author:
+ *  Modified: <iggarpe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -686,14 +690,14 @@ static int jz_mmc_slot_is_empty(int slot)
 
 	if (empty) {
 		/* wait for card insertion */
-#ifdef CONFIG_MIPS_JZ4740_LYRA
+#if defined(CONFIG_JZ4740_LYRA) || defined(CONFIG_JZ4740_A320)
 		__gpio_as_irq_rise_edge(MSC_HOTPLUG_PIN);
 #else
 		__gpio_as_irq_fall_edge(MSC_HOTPLUG_PIN);
 #endif
 	} else {
 		/* wait for card removal */
-#ifdef CONFIG_MIPS_JZ4740_LYRA
+#if defined(CONFIG_JZ4740_LYRA) || defined(CONFIG_JZ4740_A320)
 		__gpio_as_irq_fall_edge(MSC_HOTPLUG_PIN);
 #else
 		__gpio_as_irq_rise_edge(MSC_HOTPLUG_PIN);
