@@ -221,7 +221,12 @@ config FB_JZ4740_SLCD
 choice
 	depends on FB_JZ4740_SLCD
 	prompt "SLCD Panel"
-	default JZ_SLCD_LGDP4551_8BUS
+	default JZ_SLCD_A320
+
+config JZ_SLCD_A320
+	bool "Dingoo A320 Smart LCD panel"
+	---help---
+	Driver for Dingoo A320 IL9325 Smart LCD panel.
 
 config JZ_SLCD_LGDP4551
 	bool "LG LGDP4551 Smart LCD panel"
