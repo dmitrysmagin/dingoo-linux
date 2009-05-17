@@ -155,6 +155,10 @@ void __init prom_free_prom_memory(void)
 {
 }
 
+#ifndef MEMSIZE
+#define MEMSIZE 0x04000000
+#endif
+
 void __init prom_init(void)
 {
 	unsigned char *memsize_str;
@@ -169,7 +173,7 @@ void __init prom_init(void)
 	prom_init_cmdline();
 	memsize_str = prom_getenv("memsize");
 	if (!memsize_str) {
-		memsize = 0x04000000;
+		memsize = MEMSIZE;
 	} else {
 		memsize = simple_strtol(memsize_str, NULL, 0);
 	}
