@@ -88,17 +88,19 @@ struct jzfb_info {
 	unsigned int bpp;	/* bit per pixel */
 	unsigned int bus;
 	unsigned int pclk;	/* pixel clk */
-	
 };
 
 static struct jzfb_info jzfb = {
+#ifdef CONFIG_JZ_SLCD_A320
+	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
+	320, 240, 16, 16, 16000000	/*16 bpp, 16 bus */
+#endif
 #ifdef CONFIG_JZ_SLCD_LGDP4551
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
 	400, 240, 16, 8, 16000000 	/*16 bpp, 8 bus*/
 //	240, 400, 18, 8, 16000000 	/*18 bpp, 8 bus*/
 //	400, 240, 18, 8, 16000000 	/*18 bpp, 8 bus*/
 #endif
-
 #ifdef CONFIG_JZ_SLCD_SPFD5420A
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
 	400, 240, 18, 18, 16000000 	/*18 bpp, 18 bus*/
@@ -117,37 +119,63 @@ static void Mcupanel_RegSet(UINT32 cmd, UINT32 data)
 {
 	switch (jzfb.bus) {
 	case 8:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	case 9:
 		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
 		data = ((data << 6) & 0xfc0000) | ((data << 4) & 0xfc00) | ((data << 2) & 0xfc);
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | data;
-		break;
-	case 16:
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		break;
+
+	case 16:
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | (cmd&0xffff);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	case 18:
 		cmd = ((cmd & 0xff) << 1) | ((cmd & 0xff00) << 2); 	
  		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
- 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | cmd;
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | ((data<<6)&0xfc0000)|((data<<4)&0xfc00) | ((data<<2)&0xfc);
+ 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	default:
 		printk("Don't support %d bit Bus\n", jzfb.bus );
 		break;
@@ -159,49 +187,39 @@ static void Mcupanel_Command(UINT32 cmd) {
 	switch (jzfb.bus) {
 	case 8:
 	case 9:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
 		break;
+
 	case 16:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | (cmd&0xffff);
-		break;
-	case 18:
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
-		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) << 2) | ((cmd&0xff) << 1);
+
+		__slcd_special_rs_disable();
 		break;
+
+	case 18:
+		__slcd_special_rs_enable();
+
+		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) << 2) | ((cmd&0xff) << 1);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+		break;
+
 	default:
 		printk("Don't support %d bit Bus\n", jzfb.bus );
 		break;
 	}
 }
-
-/* Set the start address of screen, for example (0, 0) */
-#ifdef CONFIG_JZ_SLCD_LGDP4551
-static void Mcupanel_SetAddr(UINT16 x, UINT16 y)
-{
-	Mcupanel_RegSet(0x20,x) ;
-	udelay(1);
-	Mcupanel_RegSet(0x21,y) ;
-	udelay(1);
-	Mcupanel_Command(0x22);	
-
-}
-#endif
-#ifdef CONFIG_JZ_SLCD_SPFD5420A
-void Mcupanel_SetAddr(u32 x, u32 y) //u32
-{
-	Mcupanel_RegSet(0x200,x) ;
-	udelay(1);
-	Mcupanel_RegSet(0x201,y) ;
-	udelay(1);
-	Mcupanel_Command(0x202);
-
-}
-
-#endif
 
 static inline u_int chan_to_field(u_int chan, struct fb_bitfield *bf)
 {
@@ -941,8 +959,14 @@ void slcd_hw_init(void)
 			| SLCD_CFG_CWIDTH_16BIT | SLCD_CFG_CS_ACTIVE_LOW
 			| SLCD_CFG_RS_CMD_LOW | SLCD_CFG_CLK_ACTIVE_FALLING
 			| SLCD_CFG_TYPE_PARALLEL;
+#ifdef CONFIG_JZ4740_A320
+		REG_GPIO_PXFUNS(2) = 0x0014FFFF;	/* Dingoo A320 is a bit freaky */
+		REG_GPIO_PXSELC(2) = 0x0014FFFF;
+		REG_GPIO_PXPES(2)  = 0x0014FFFF;
+#else
 		__gpio_as_slcd_16bit();
-		break;
+#endif
+	break;
 	case 18:
 		REG_SLCD_CFG = SLCD_CFG_BURST_8_WORD | SLCD_CFG_DWIDTH_18
 			| SLCD_CFG_CWIDTH_18BIT | SLCD_CFG_CS_ACTIVE_LOW 
