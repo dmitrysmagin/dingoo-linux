@@ -261,7 +261,7 @@ static int mmc_read_proc (char *page, char **start, off_t off,
 {
         int len = 0;
 
-#ifdef CONFIG_JZ4740_LYRA
+#if defined(CONFIG_JZ4740_LYRA) || defined(CONFIG_JZ4740_A320)
 	if (!(__gpio_get_pin(MSC_HOTPLUG_PIN)))
 #else
 	if (__gpio_get_pin(MSC_HOTPLUG_PIN))
