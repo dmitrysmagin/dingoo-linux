@@ -259,7 +259,7 @@ config KEYBOARD_AAED2000
 	  To compile this driver as a module, choose M here: the
 	  module will be called aaed2000_kbd.
 
-config KEYBOARD_JZ
+config KEYBOARD_JZ_KEYPAD
 	tristate "JZ keypad support"
 	depends on JZSOC
 	help
@@ -268,7 +268,7 @@ config KEYBOARD_JZ
 	  To compile this driver as a module, choose M here: the
 	  module will be called jz-keypad.
 
-config 5x5_KEYBOARD_JZ
+config KEYBOARD_JZ_KEYPAD_5X5
 	tristate "JZ 5x5 keypad support"
 	depends on JZSOC
 	help
@@ -277,9 +277,19 @@ config 5x5_KEYBOARD_JZ
 	  To compile this driver as a module, choose M here: the
 	  module will be called jz-keypad.
 
+config KEYBOARD_JZ_GPIO_KEYS
+	tristate "JZ GPIO keys support"
+	depends on JZSOC
+	help
+	  This driver implements support for buttons directly
+	  connected to single GPIO pins in the Ingenic JZ SoC.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called jz-keypad.
+
 config KEYBOARD_GPIO
-	tristate "JZ GPIO Buttons support"
-#	depends on GENERIC_GPIO
+	tristate "GPIO Buttons"
+	depends on GENERIC_GPIO
 	help
 	  This driver implements support for buttons connected
 	  to GPIO pins of various CPUs (and some other chips).
