@@ -481,7 +481,7 @@ static struct ctl_table kern_table[] = {
 		.strategy	= &sysctl_string,
 	},
 #endif
-#if defined(CONFIG_HOTPLUG) && defined(CONFIG_NET)
+#if defined(CONFIG_HOTPLUG)
 	{
 		.ctl_name	= KERN_HOTPLUG,
 		.procname	= "hotplug",
