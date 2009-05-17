@@ -1,24 +1,26 @@
 /*
- * linux/arch/mips/jz4740/proc.c
+ *  linux/arch/mips/jz4740/proc.c
  * 
- * /proc/jz/ procfs for jz4740 on-chip modules.
+ *  /proc/jz/ procfs for jz4740 on-chip modules.
  * 
- * Copyright (C) 2006 Ingenic Semiconductor Inc.
- * Author: <jlwei@ingenic.cn>
+ *  Copyright (C) 2006 Ingenic Semiconductor Inc.
+ *  Copyright (C) 2009 Ignacio Garcia Perez <iggarpe@gmail.com>
  *
- *  This program is free software; you can distribute it and/or modify it
- *  under the terms of the GNU General Public License (Version 2) as
- *  published by the Free Software Foundation.
+ *  Author:   <jlwei@ingenic.cn>
+ *  Modified: <iggarpe@gmail.com>
  *
- *  This program is distributed in the hope it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- *  for more details.
+ * This program is free software; you can distribute it and/or modify it
+ * under the terms of the GNU General Public License (Version 2) as
+ * published by the Free Software Foundation.
  *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  59 Temple Place - Suite 330, Boston MA 02111-1307, USA.
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
  *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place - Suite 330, Boston MA 02111-1307, USA.
  */
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -43,6 +45,57 @@
 
 struct proc_dir_entry *proc_jz_root;
 
+/*
+ * Generic register read/write
+ */
+
+static int reg_read_proc (char *page, char **start, off_t off,
+			  int count, int *eof, void *data)
+{
+	return sprintf(page, "0x%08x\n", *((volatile u32 *)data));
+}
+
+static int reg_write_proc (struct file *file, const char *buffer, 
+			   unsigned long count, void *data)
+{
+	*((volatile u32 *)data) = simple_strtoul(buffer, 0, 16);
+	return count;
+}
+
+/*
+ * GPIO status summary
+ */
+
+static int gpio_print (char *page, const char *name, u32 value)
+{
+	int i, j, len = 0; u32 m = 0x80000000;
+	len += sprintf(page+len, "  %s 0x%08x ", name, value);
+	for (i = 0; i < 8; i++) {
+		page[len++] = ' ';
+		for (j = 0; j < 4; j++, m >>= 1) page[len++] = (value & m) ? '1' : '0';
+	}
+	page[len++] = '\n';
+	page[len] = 0;
+	return len;
+}
+
+static int gpio_read_proc (char *page, char **start, off_t off,
+			   int count, int *eof, void *data)
+{
+	int i, len = 0;
+	for (i = 0; i < 4; i++) {
+		len += sprintf(page+len, "GPIO%d:\n", i);
+		len += gpio_print(page+len, "PXPIN", REG_GPIO_PXPIN(i));
+		len += gpio_print(page+len, "PXDAT", REG_GPIO_PXDAT(i));
+		len += gpio_print(page+len, "PXIM ", REG_GPIO_PXIM(i));
+		len += gpio_print(page+len, "PXPE ", REG_GPIO_PXPE(i));
+		len += gpio_print(page+len, "PXFUN", REG_GPIO_PXFUN(i));
+		len += gpio_print(page+len, "PXSEL", REG_GPIO_PXSEL(i));
+		len += gpio_print(page+len, "PXDIR", REG_GPIO_PXDIR(i));
+		len += gpio_print(page+len, "PXTRG", REG_GPIO_PXTRG(i));
+	}
+	return len;
+}
 
 /*
  * EMC Modules
@@ -188,31 +241,10 @@ static int udc_read_proc(char *page, char **start, off_t off,
 {
         int len = 0;
 
-	if (__gpio_get_pin(GPIO_UDC_HOTPLUG)) {
-
-#ifdef CONFIG_JZ_UDC_HOTPLUG
-
-		/* Cable has connected, wait for disconnection. */
-		__gpio_as_irq_fall_edge(GPIO_UDC_HOTPLUG);
-
-		if (jz_udc_active)
-			len += sprintf (page+len, "CONNECT_CABLE\n");
-		else
-			len += sprintf (page+len, "CONNECT_POWER\n");
-#else
+	if (__gpio_get_pin(GPIO_UDC_HOTPLUG))
 		len += sprintf (page+len, "CONNECT\n");
-#endif
-	}
-	else {
+	else	len += sprintf (page+len, "REMOVE\n");
 
-#ifdef CONFIG_JZ_UDC_HOTPLUG
-		/* Cable has disconnected, wait for connection. */
-		__gpio_as_irq_rise_edge(GPIO_UDC_HOTPLUG);
-#endif
-
-		len += sprintf (page+len, "REMOVE\n");
-	}
-                                                                                                               
         return len;
 }
 
@@ -229,14 +261,13 @@ static int mmc_read_proc (char *page, char **start, off_t off,
 {
         int len = 0;
 
-#if defined(CONFIG_JZ4740_LYRA)
-        if (!(__gpio_get_pin(MSC_HOTPLUG_PIN)))
+#ifdef CONFIG_JZ4740_LYRA
+	if (!(__gpio_get_pin(MSC_HOTPLUG_PIN)))
 #else
-        if (__gpio_get_pin(MSC_HOTPLUG_PIN))
+	if (__gpio_get_pin(MSC_HOTPLUG_PIN))
 #endif
                 len += sprintf (page+len, "REMOVE\n");
-        else
-                len += sprintf (page+len, "INSERT\n");
+        else	len += sprintf (page+len, "INSERT\n");
 
         return len;
 }
@@ -792,66 +823,93 @@ static int imem_write_proc(struct file *file, const char *buffer, unsigned long 
 #endif /* CONFIG_RESERVE_IPU_MEM */
 
 /*
+ * Convenience entry creation function
+ */
+
+void jz_proc_create (const char *name,
+		     read_proc_t *read_proc,
+		     write_proc_t *write_proc,
+		     void *data)
+{
+	struct proc_dir_entry *res;
+	res = create_proc_entry(name, 0644, proc_jz_root);
+	if (res) {
+		res->read_proc = read_proc;
+		res->write_proc = write_proc;
+		res->data = (void *)data;
+	}
+}
+
+void jz_proc_create_n (const char *fmt, unsigned int num,
+		       read_proc_t *read_proc,
+		       write_proc_t *write_proc,
+		       void *data)
+{
+	char name [32];
+	snprintf(name, sizeof(name), fmt, num);
+	jz_proc_create(name, read_proc, write_proc, data);
+}
+
+/*
  * /proc/jz/xxx entry
  *
  */
 static int __init jz_proc_init(void)
 {
-	struct proc_dir_entry *res;
+	unsigned int i;
 #ifdef CONFIG_RESERVE_IPU_MEM
-	unsigned int virt_addr, i;
+	unsigned int virt_addr;
 #endif
 
 	proc_jz_root = proc_mkdir("jz", 0);
 
-	/* External Memory Controller */
-	res = create_proc_entry("emc", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = emc_read_proc;
-		res->write_proc = NULL;
-		res->data = NULL;
+	/* GPIO read only summary */
+	jz_proc_create("gpio", gpio_read_proc, NULL, NULL);
+
+	/* GPIO single register read/write access */
+	for (i = 0; i < 4; i++) {
+		jz_proc_create_n("gpio%u_pxpin",  i, reg_read_proc, NULL, (void *)GPIO_PXPIN(i));
+		jz_proc_create_n("gpio%u_pxdat",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDAT(i));
+		jz_proc_create_n("gpio%u_pxdats", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDATS(i));
+		jz_proc_create_n("gpio%u_pxdatc", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDATC(i));
+		jz_proc_create_n("gpio%u_pxim",   i, reg_read_proc, reg_write_proc, (void *)GPIO_PXIM(i));
+		jz_proc_create_n("gpio%u_pxims",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXIMS(i));
+		jz_proc_create_n("gpio%u_pximc",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXIMC(i));
+		jz_proc_create_n("gpio%u_pxpe",   i, reg_read_proc, reg_write_proc, (void *)GPIO_PXPE(i));
+		jz_proc_create_n("gpio%u_pxpes",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXPES(i));
+		jz_proc_create_n("gpio%u_pxpec",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXPEC(i));
+		jz_proc_create_n("gpio%u_pxfun",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXFUN(i));
+		jz_proc_create_n("gpio%u_pxfuns", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXFUNS(i));
+		jz_proc_create_n("gpio%u_pxfunc", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXFUNC(i));
+		jz_proc_create_n("gpio%u_pxsel",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXSEL(i));
+		jz_proc_create_n("gpio%u_pxsels", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXSELS(i));
+		jz_proc_create_n("gpio%u_pxselc", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXSELC(i));
+		jz_proc_create_n("gpio%u_pxdir",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDIR(i));
+		jz_proc_create_n("gpio%u_pxdirs", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDIRS(i));
+		jz_proc_create_n("gpio%u_pxdirc", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXDIRC(i));
+		jz_proc_create_n("gpio%u_pxtrg",  i, reg_read_proc, reg_write_proc, (void *)GPIO_PXTRG(i));
+		jz_proc_create_n("gpio%u_pxtrgs", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXTRGS(i));
+		jz_proc_create_n("gpio%u_pxtrgc", i, reg_read_proc, reg_write_proc, (void *)GPIO_PXTRGC(i));
 	}
+	
+	/* External Memory Controller */
+	jz_proc_create("emc", emc_read_proc, NULL, NULL);
 
 	/* Power Management Controller */
-	res = create_proc_entry("pmc", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = pmc_read_proc;
-		res->write_proc = pmc_write_proc;
-		res->data = NULL;
-	}
+	jz_proc_create("pmc", pmc_read_proc, pmc_write_proc, NULL);
 
 	/* Clock Generation Module */
-	res = create_proc_entry("cgm", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = cgm_read_proc;
-		res->write_proc = cgm_write_proc;
-		res->data = NULL;
-	}
+	jz_proc_create("cgm", cgm_read_proc, cgm_write_proc, NULL);
 
 	/* udc hotplug */
-	res = create_proc_entry("udc", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = udc_read_proc;
-		res->write_proc = NULL;
-		res->data = NULL;
-	}
+	jz_proc_create("udc", udc_read_proc, NULL, NULL);
 
 	/* mmc hotplug */
-	res = create_proc_entry("mmc", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = mmc_read_proc;
-		res->write_proc = NULL;
-		res->data = NULL;
-	}
+	jz_proc_create("mmc", mmc_read_proc, NULL, NULL);
 
 #ifdef CONFIG_RESERVE_IPU_MEM
 	/* Image process unit */
-	res = create_proc_entry("ipu", 0644, proc_jz_root);
-	if (res) {
-		res->read_proc = ipu_read_proc;
-		res->write_proc = ipu_write_proc;
-		res->data = NULL;
-	}
+	jz_proc_create("ipu", ipu_read_proc, ipu_write_proc, NULL);
 
 	/*
 	 * Reserve a 4MB memory for IPU on JZ4740.
@@ -859,12 +917,7 @@ static int __init jz_proc_init(void)
 	jz_imem_base = (unsigned int)__get_free_pages(GFP_KERNEL, IMEM_MAX_ORDER);
 	if (jz_imem_base) {
 		/* imem (IPU memory management) */
-		res = create_proc_entry("imem", 0644, proc_jz_root);
-		if (res) {
-			res->read_proc = imem_read_proc;
-			res->write_proc = imem_write_proc;
-			res->data = NULL;
-		}
+		jz_proc_create("imem", imem_read_proc, imem_write_proc, NULL);
 
 		/* Set page reserved */
 		virt_addr = jz_imem_base;
