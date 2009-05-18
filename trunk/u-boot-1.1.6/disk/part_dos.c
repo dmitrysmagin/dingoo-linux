@@ -35,9 +35,10 @@
 #include <ide.h>
 #include "part_dos.h"
 
-#if ((CONFIG_COMMANDS & CFG_CMD_IDE)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_SCSI)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_USB)	|| \
+#if ((CONFIG_COMMANDS & CFG_CMD_IDE) || \
+     (CONFIG_COMMANDS & CFG_CMD_SATA) || \
+     (CONFIG_COMMANDS & CFG_CMD_SCSI) || \
+     (CONFIG_COMMANDS & CFG_CMD_USB) || \
      defined(CONFIG_MMC) || \
      defined(CONFIG_SYSTEMACE) ) && defined(CONFIG_DOS_PARTITION)
 
@@ -194,6 +195,7 @@ static int get_partition_info_extended (block_dev_desc_t *dev_desc, int ext_part
 			info->size  = le32_to_int (pt->size4);
 			switch(dev_desc->if_type) {
 				case IF_TYPE_IDE:
+				case IF_TYPE_SATA:
 				case IF_TYPE_ATAPI:
 					sprintf ((char *)info->name, "hd%c%d\n", 'a' + dev_desc->dev, part_num);
 					break;
@@ -248,4 +250,4 @@ int get_partition_info_dos (block_dev_desc_t *dev_desc, int part, disk_partition
 }
 
 
-#endif	/* (CONFIG_COMMANDS & CFG_CMD_IDE) && CONFIG_DOS_PARTITION */
+#endif

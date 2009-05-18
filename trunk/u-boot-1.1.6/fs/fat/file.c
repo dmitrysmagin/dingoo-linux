@@ -205,4 +205,4 @@ file_read(const char *filename, void *buffer, unsigned long maxsize)
 	return filesystems[current_filesystem].read(arg, buffer, maxsize);
 }
 
-#endif /* #if (CONFIG_COMMANDS & CFG_CMD_FAT) */
+#endif
