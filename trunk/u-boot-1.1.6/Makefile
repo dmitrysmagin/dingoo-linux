@@ -2212,6 +2212,18 @@ pavo_nand_config	:	unconfig
 	@echo "TEXT_BASE = 0x80100000" > $(obj)board/pavo/config.tmp
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
+a320_config		: 	unconfig
+	@ >include/config.h
+	@echo "#define CONFIG_A320 1" >>include/config.h
+	@./mkconfig -a a320 mips mips a320
+
+a320_nand_config	:	unconfig
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "Compile NAND boot image for Dingoo A320"
+	@./mkconfig -a a320 mips mips a320
+	@echo "TEXT_BASE = 0x80100000" > $(obj)board/a320/config.tmp
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
 dipper_config		: 	unconfig
 	@ >include/config.h
 	@echo "#define CONFIG_DIPPER 1" >>include/config.h
