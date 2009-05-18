@@ -41,6 +41,32 @@ static int sd2_0 = 0;
  * GPIO definition
  */
 
+#ifdef CONFIG_A320
+
+#define __msc_init_io()				\
+do {						\
+	__gpio_as_input(GPIO_SD_CD);		\
+} while (0)
+
+#define __msc_enable_power()			\
+do {						\
+} while (0)
+
+#define __msc_disable_power()			\
+do {						\
+} while (0)
+
+#define __msc_card_detected()			\
+({						\
+	int detected = 1;			\
+	__gpio_as_input(GPIO_SD_CD);		\
+	if (!__gpio_get_pin(GPIO_SD_CD))	\
+		detected = 0;			\
+	detected;				\
+})
+
+#else /* CONFIG_A320 */
+
 #define __msc_init_io()				\
 do {						\
 	__gpio_as_output(GPIO_SD_VCC_EN_N);	\
@@ -66,13 +92,13 @@ do {						\
 	detected;				\
 })
 
+#endif /* CONFIG_A320 */
+
 /*
  * Local functions
  */
 
 #ifdef CONFIG_MMC
-extern int
-fat_register_device(block_dev_desc_t *dev_desc, int part_no);
 
 static block_dev_desc_t mmc_dev;
 
@@ -1013,7 +1039,6 @@ int mmc_init(int verbose)
 	mmc_select_card();
 
 	mmc_dev.block_read = mmc_bread; 
-	fat_register_device(&mmc_dev,1); /* partitions start counting with 1 */
 
 	return 0;
 }
