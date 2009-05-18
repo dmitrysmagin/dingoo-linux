@@ -24,6 +24,7 @@
 #include <common.h>
 #include <command.h>
 #include <ide.h>
+#include <part.h>
 
 #undef	PART_DEBUG
 
@@ -33,10 +34,67 @@
 #define PRINTF(fmt,args...)
 #endif
 
-#if ((CONFIG_COMMANDS & CFG_CMD_IDE)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_SCSI)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_USB)	|| \
-     defined(CONFIG_MMC) || \
+#if ((CONFIG_COMMANDS & CFG_CMD_IDE)  || \
+     (CONFIG_COMMANDS & CFG_CMD_SATA) || \
+     (CONFIG_COMMANDS & CFG_CMD_SCSI) || \
+     (CONFIG_COMMANDS & CFG_CMD_USB)  || \
+     defined(CONFIG_MMC)              || \
+     defined(CONFIG_SYSTEMACE) )
+
+struct block_drvr {
+	char *name;
+	block_dev_desc_t* (*get_dev)(int dev);
+};
+
+static const struct block_drvr block_drvr[] = {
+#if (CONFIG_COMMANDS & CFG_CMD_IDE)
+	{ .name = "ide", .get_dev = ide_get_dev, },
+#endif
+#if (CONFIG_COMMANDS & CFG_CMD_SATA)
+	{.name = "sata", .get_dev = sata_get_dev, },
+#endif
+#if (CONFIG_COMMANDS & CFG_CMD_SCSI)
+	{ .name = "scsi", .get_dev = scsi_get_dev, },
+#endif
+#if (CONFIG_COMMANDS & CFG_CMD_USB) && defined(CONFIG_USB_STORAGE)
+	{ .name = "usb", .get_dev = usb_stor_get_dev, },
+#endif
+#if defined(CONFIG_MMC)
+	{ .name = "mmc", .get_dev = mmc_get_dev, },
+#endif
+#if defined(CONFIG_SYSTEMACE)
+	{ .name = "ace", .get_dev = systemace_get_dev, },
+#endif
+	{ },
+};
+
+DECLARE_GLOBAL_DATA_PTR;
+
+block_dev_desc_t *get_dev(char* ifname, int dev)
+{
+	const struct block_drvr *drvr = block_drvr;
+	block_dev_desc_t* (*reloc_get_dev)(int dev);
+
+	while (drvr->name) {
+		reloc_get_dev = drvr->get_dev + gd->reloc_off;
+		if (strncmp(ifname, drvr->name, strlen(drvr->name)) == 0)
+			return reloc_get_dev(dev);
+		drvr++;
+	}
+	return NULL;
+}
+#else
+block_dev_desc_t *get_dev(char* ifname, int dev)
+{
+	return NULL;
+}
+#endif
+
+#if ((CONFIG_COMMANDS & CFG_CMD_IDE)  || \
+     (CONFIG_COMMANDS & CFG_CMD_SATA) || \
+     (CONFIG_COMMANDS & CFG_CMD_SCSI) || \
+     (CONFIG_COMMANDS & CFG_CMD_USB)  || \
+     defined(CONFIG_MMC)              || \
      defined(CONFIG_SYSTEMACE) )
 
 /* ------------------------------------------------------------------------- */
@@ -51,38 +109,45 @@ void dev_print (block_dev_desc_t *dev_desc)
 	lbaint_t lba512;
 #endif
 
-	if (dev_desc->type==DEV_TYPE_UNKNOWN) {
-		puts ("not available\n");
-		return;
-	}
-	if (dev_desc->if_type==IF_TYPE_SCSI)  {
-		printf ("(%d:%d) ", dev_desc->target,dev_desc->lun);
-	}
-	if (dev_desc->if_type==IF_TYPE_IDE) {
+	switch (dev_desc->if_type) {
+	case IF_TYPE_SCSI:
+		printf ("(%d:%d) Vendor: %s Prod.: %s Rev: %s\n",
+			dev_desc->target,dev_desc->lun,
+			dev_desc->vendor,
+			dev_desc->product,
+			dev_desc->revision);
+		break;
+	case IF_TYPE_IDE:
+	case IF_TYPE_SATA:
 		printf ("Model: %s Firm: %s Ser#: %s\n",
 			dev_desc->vendor,
 			dev_desc->revision,
 			dev_desc->product);
-	} else {
-		printf ("Vendor: %s Prod.: %s Rev: %s\n",
-			dev_desc->vendor,
-			dev_desc->product,
-			dev_desc->revision);
+		break;
+	case IF_TYPE_UNKNOWN:
+	default:
+		puts ("not available\n");
+		return;
 	}
 	puts ("            Type: ");
 	if (dev_desc->removable)
 		puts ("Removable ");
 	switch (dev_desc->type & 0x1F) {
-		case DEV_TYPE_HARDDISK: puts ("Hard Disk");
-					break;
-		case DEV_TYPE_CDROM: 	puts ("CD ROM");
-					break;
-		case DEV_TYPE_OPDISK: 	puts ("Optical Device");
-					break;
-		case DEV_TYPE_TAPE: 	puts ("Tape");
-					break;
-		default:		printf ("# %02X #", dev_desc->type & 0x1F);
-					break;
+	case DEV_TYPE_HARDDISK:
+		puts ("Hard Disk");
+		break;
+	case DEV_TYPE_CDROM:
+		puts ("CD ROM");
+		break;
+	case DEV_TYPE_OPDISK:
+		puts ("Optical Device");
+		break;
+	case DEV_TYPE_TAPE:
+		puts ("Tape");
+		break;
+	default:
+		printf ("# %02X #", dev_desc->type & 0x1F);
+		break;
 	}
 	puts ("\n");
 	if ((dev_desc->lba * dev_desc->blksz)>0L) {
@@ -121,11 +186,13 @@ void dev_print (block_dev_desc_t *dev_desc)
 		puts ("            Capacity: not available\n");
 	}
 }
-#endif	/* CFG_CMD_IDE || CFG_CMD_SCSI || CFG_CMD_USB || CONFIG_MMC */
+#endif
 
-#if ((CONFIG_COMMANDS & CFG_CMD_IDE)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_SCSI)	|| \
-     (CONFIG_COMMANDS & CFG_CMD_USB)	|| \
+#if ((CONFIG_COMMANDS & CFG_CMD_IDE)  || \
+     (CONFIG_COMMANDS & CFG_CMD_SATA) || \
+     (CONFIG_COMMANDS & CFG_CMD_SCSI) || \
+     (CONFIG_COMMANDS & CFG_CMD_USB)  || \
+     defined(CONFIG_MMC)              || \
      defined(CONFIG_SYSTEMACE)          )
 
 #if defined(CONFIG_MAC_PARTITION) || \
@@ -165,9 +232,10 @@ void init_part (block_dev_desc_t * dev_desc)
 }
 
 
-int get_partition_info (block_dev_desc_t *dev_desc, int part, disk_partition_t *info)
+int get_partition_info (block_dev_desc_t *dev_desc, int part
+					, disk_partition_t *info)
 {
-		switch (dev_desc->part_type) {
+	switch (dev_desc->part_type) {
 #ifdef CONFIG_MAC_PARTITION
 	case PART_TYPE_MAC:
 		if (get_partition_info_mac(dev_desc,part,info) == 0) {
@@ -214,18 +282,27 @@ static void print_part_header (const char *type, block_dev_desc_t * dev_desc)
 {
 	puts ("\nPartition Map for ");
 	switch (dev_desc->if_type) {
-		case IF_TYPE_IDE:  	puts ("IDE");
-					break;
-		case IF_TYPE_SCSI: 	puts ("SCSI");
-					break;
-		case IF_TYPE_ATAPI:	puts ("ATAPI");
-					break;
-		case IF_TYPE_USB:	puts ("USB");
-					break;
-		case IF_TYPE_DOC:	puts ("DOC");
-					break;
-		default: 		puts ("UNKNOWN");
-					break;
+	case IF_TYPE_IDE:
+		puts ("IDE");
+		break;
+	case IF_TYPE_SATA:
+		puts ("SATA");
+		break;
+	case IF_TYPE_SCSI:
+		puts ("SCSI");
+		break;
+	case IF_TYPE_ATAPI:
+		puts ("ATAPI");
+		break;
+	case IF_TYPE_USB:
+		puts ("USB");
+		break;
+	case IF_TYPE_DOC:
+		puts ("DOC");
+		break;
+	default:
+		puts ("UNKNOWN");
+		break;
 	}
 	printf (" device %d  --   Partition Type: %s\n\n",
 			dev_desc->dev, type);
@@ -271,7 +348,8 @@ void print_part (block_dev_desc_t * dev_desc)
 
 
 #else	/* neither MAC nor DOS nor ISO partition configured */
-# error neither CONFIG_MAC_PARTITION nor CONFIG_DOS_PARTITION nor CONFIG_ISO_PARTITION configured!
+# error neither CONFIG_MAC_PARTITION nor CONFIG_DOS_PARTITION
+# error nor CONFIG_ISO_PARTITION configured!
 #endif
 
-#endif	/* (CONFIG_COMMANDS & CFG_CMD_IDE) || CONFIG_COMMANDS & CFG_CMD_SCSI) */
+#endif

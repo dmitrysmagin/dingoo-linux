@@ -22,12 +22,13 @@
  */
 #ifndef _PART_H
 #define _PART_H
+
 #include <ide.h>
 
 typedef struct block_dev_desc {
 	int		if_type;	/* type of the interface */
-	int	        dev;	  	/* device number */
-	unsigned char	part_type;  	/* partition type */
+	int		dev;		/* device number */
+	unsigned char	part_type;	/* partition type */
 	unsigned char	target;		/* target SCSI ID */
 	unsigned char	lun;		/* target LUN */
 	unsigned char	type;		/* device type */
@@ -35,15 +36,20 @@ typedef struct block_dev_desc {
 #ifdef CONFIG_LBA48
 	unsigned char	lba48;		/* device can use 48bit addr (ATA/ATAPI v7) */
 #endif
-	lbaint_t		lba;	  	/* number of blocks */
+	lbaint_t		lba;		/* number of blocks */
 	unsigned long	blksz;		/* block size */
-	unsigned char	vendor [40+1]; 	/* IDE model, SCSI Vendor */
-	unsigned char	product[20+1];	/* IDE Serial no, SCSI product */
-	unsigned char	revision[8+1];	/* firmware revision */
+	char		vendor [40+1];	/* IDE model, SCSI Vendor */
+	char		product[20+1];	/* IDE Serial no, SCSI product */
+	char		revision[8+1];	/* firmware revision */
 	unsigned long	(*block_read)(int dev,
 				      unsigned long start,
 				      lbaint_t blkcnt,
-				      unsigned long *buffer);
+				      void *buffer);
+	unsigned long	(*block_write)(int dev,
+				       unsigned long start,
+				       lbaint_t blkcnt,
+				       const void *buffer);
+	void		*priv;		/* driver private struct pointer */
 }block_dev_desc_t;
 
 /* Interface types: */
@@ -54,6 +60,8 @@ typedef struct block_dev_desc {
 #define IF_TYPE_USB		4
 #define IF_TYPE_DOC		5
 #define IF_TYPE_MMC		6
+#define IF_TYPE_SD		7
+#define IF_TYPE_SATA		8
 
 /* Part types */
 #define PART_TYPE_UNKNOWN	0x00
@@ -82,6 +90,15 @@ typedef struct disk_partition {
 	uchar	name[32];	/* partition name			*/
 	uchar	type[32];	/* string type description		*/
 } disk_partition_t;
+
+/* Misc _get_dev functions */
+block_dev_desc_t* get_dev(char* ifname, int dev);
+block_dev_desc_t* ide_get_dev(int dev);
+block_dev_desc_t* sata_get_dev(int dev);
+block_dev_desc_t* scsi_get_dev(int dev);
+block_dev_desc_t* usb_stor_get_dev(int dev);
+block_dev_desc_t* mmc_get_dev(int dev);
+block_dev_desc_t* systemace_get_dev(int dev);
 
 /* disk/part.c */
 int get_partition_info (block_dev_desc_t * dev_desc, int part, disk_partition_t *info);
