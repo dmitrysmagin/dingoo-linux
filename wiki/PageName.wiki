@@ -1,5 +1,0 @@
-#Hardware
-
-= Hardware =
-
-Add your content here.
