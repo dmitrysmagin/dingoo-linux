@@ -74,7 +74,7 @@ For most automake enabled programs, you do something like this:
 make
 }}}
 
-The minimal root filesystem contains libid3tag, libmad, libSDL, libSDL_image and libSDL_gfx, but for development you also need to install them (and include files) in the mips toolchain. Compile the libraries yourself or (better), just get the libs archive from the downloads section and unpack it in /opt/mipseltools-gcc412-glibc261 (properly configuring the SDL for compilation is a pain in the ass).
+The minimal root filesystem contains libid3tag, libmad, libSDL, libSDL_image and libSDL_gfx, but for development you also need to install them (and include files) in the mips toolchain in your PC. Compile the libraries yourself or (better), just get the libs archive from the downloads section and unpack it in /opt/mipseltools-gcc412-glibc261 (properly configuring the SDL for compilation is a pain in the ass).
 
 IMPORTANT: you need to set the environment variable SDL_NOMOUSE or the SDL initialization in your programs will fail:
 
