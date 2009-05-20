@@ -51,6 +51,39 @@ Most of this port is also used for SDRAM.
 || PXDIR || 0x20000000 || 0010 0000 0000 0000 0000 0000 0000 0000 ||
 || PXTRG || 0x20000000 || 0010 0000 0000 0000 0000 0000 0000 0000 ||
 
+||  0 || SDRAM A0 ||
+||  1 || SDRAM A1 ||
+||  2 || SDRAM A2 ||
+||  3 || SDRAM A3 ||
+||  4 || SDRAM A4 ||
+||  5 || SDRAM A5 ||
+||  6 || SDRAM A6 ||
+||  7 || SDRAM A7 ||
+||  8 || SDRAM A8 ||
+||  9 || SDRAM A9 ||
+|| 10 || SDRAM A10 ||
+|| 11 || SDRAM A11 ||
+|| 12 || SDRAM A12 ||
+|| 13 || SDRAM A13 ||
+|| 14 || SDRAM A14 ||
+|| 15 || SDRAM A15/CL ||
+|| 16 || SDRAM A16/AL ||
+|| 17 || *GPIO output CS# signal to LCD* ||
+|| 18 || *GPIO output RESET# signal to LCD* ||
+|| 19 || SDRAM DCS# ||
+|| 20 || SDRAM RAS# ||
+|| 21 || SDRAM CAS# ||
+|| 22 || SDRAM RDWE#/BUFD# ||
+|| 23 || SDRAM CKE ||
+|| 24 || SDRAM CK0 ||
+|| 25 || SDRAM CS1# ||
+|| 26 || SDRAM CS2# ||
+|| 27 || SDRAM CS3# ||
+|| 28 || SDRAM CS4# ||
+|| 29 || *GPIO input miniSD detection (1=preset)* ||
+|| 30 || *GPIO input ???* ||
+|| 31 || SDRAM WE0# ||
+
 = Port C =
 
 Most of this port is used for LCD/TV out.
@@ -82,21 +115,21 @@ Pin usage:
 || 14 || LCD_D14 ||
 || 15 || LCD_D15 ||
 || 16 || *GPIO input ???* ||
-|| 17 || *GPIO input START button (0=pressed)* ||
+|| 17 || *GPIO input START button* ||
 || 18 || LCD PCLK ||
-|| 19 || *GPIO RS# signal to LCD* ||
+|| 19 || *GPIO output RS# signal to LCD* ||
 || 20 || LCD VSYNC ||
-|| 21 || *GPIO, output=1 * ||
-|| 22 || GPIO input ???* || 
-|| 23 || GPIO input ???* ||
+|| 21 || *GPIO, output=1 ???* ||
+|| 22 || *GPIO input ???* || 
+|| 23 || *GPIO input ???* ||
 || 24 || SDRAM WE1# ||
 || 25 || SDRAM WE2# ||
 || 26 || SDRAM WE3# ||
 || 27 || *GPIO output AUDIO mute (0=no sound)* ||
 || 28 || NAND FRE# ||
 || 29 || NAND FWE# ||
-|| 30 || GPIO input, maybe used to sense NAND busy state? ||
-|| 31 || GPIO input, configured as low level interrupt by the ROM IPL (initial program loader) and never touched again by firmware ||
+|| 30 || *GPIO input, maybe used to sense NAND busy state?* ||
+|| 31 || *GPIO input, configured as low level interrupt by the ROM IPL (initial program loader), probably unused thereafter* ||
 
 = Port D =
 
@@ -107,3 +140,37 @@ Pin usage:
 || PXSEL || 0x3FCEC067 || 0011 1111 1100 1110 1100 0000 0110 0111 || 
 || PXDIR || 0xC0300090 || 1100 0011 0000 0000 0000 0000 1001 0000 ||
 || PXTRG || 0x384EC067 || 0011 1000 0100 1110 1100 0000 0110 0111 ||
+
+||  0 || *GPIO input A button* ||
+||  1 || *GPIO input B button* ||
+||  2 || *GPIO input Y button* ||
+||  3 || *GPIO input ???* ||
+||  4 || *GPIO output=1 ???* ||
+||  5 || *GPIO input DPAD LEFT* ||
+||  6 || *GPIO input DPAD UP* ||
+||  7 || *GPIO output AUDIO control (0=bad sound ONLY on earphones ???)* ||
+||  8 || miniSD CMD ||
+||  9 || miniSD CLK ||
+|| 10 || miniSD D0 ||
+|| 11 || miniSD D1 ||
+|| 12 || miniSD D2 ||
+|| 13 || miniSD D3 ||
+|| 14 || *GPIO input LEFT SHOULDER button* ||
+|| 15 || *GPIO input RIGHT SHOULDER button* ||
+|| 16 || *GPIO input ???* (external driver present for sure because readback fails if configured as output ||
+|| 17 || *GPIO input SELECT button* ||
+|| 18 || *GPIO input DPAD RIGHT* ||
+|| 19 || *GPIO input X button* ||
+|| 20 || *GPIO output=1 ???* ||
+|| 21 || *GPIO output=0 ???* ||
+|| 22 || *GPIO input ???* ||
+|| 23 || I2C SDA ||
+|| 24 || I2C SCK ||
+|| 25 || UART0 TXD ||
+|| 26 || UART1 RXD ||
+|| 27 || *GPIO input DPAD down* ||
+|| 28 || *GPIO input USB power detection (1=power present)* ||
+|| 29 || *POWER BUTTON, but FUN=1 ??? jz4740.h says this pin does not have special functin !!!* ||
+|| 30 || *GPIO output=0 ???* ||
+|| 31 || *GPIO output LCD backlight (1=max, use as PWM7 to obtain different levels* ||
+|| 31 ||
