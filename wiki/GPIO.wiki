@@ -1,0 +1,109 @@
+Summary of GPIO usage.
+
+= Introduction =
+
+Mapping the GPIO usage is usually a tought task. In the A320 we have had help from the fact that:
+
+  * You can make programs for the original firmware using the provided SDK.
+  * The OS does not use the MMU to protect the special registers, so you can write a program that can read the state of every register (and even change it).
+
+Having a "known good" set of values for certain registers helped a lot setting up the linux kernel for the A320. 
+
+= General information about GPIO on the JZ4740 =
+
+The JZ4740 has four 32 bit GPIO ports. Each port is controlled by eight registers:
+
+  * PXPIN: state of the pin (read only).
+  * PXDAT: output value.
+  * PXIM:  interrupt mask (1=mask interrupt).
+  * PXPE:  pull resistor control (1=disable).
+  * PXFUN: function control (0=GPIO/interrupt, 1=special function).
+  * PXSEL: function select  (0=GPIO/special function 0, 1=interrupt/special function 1).
+  * PXDIR: pin direction (0=input/low level int/falling edge int, 1=output/high level int/raising edge int).
+  * PXTRG: trigger selection (0=level trigger, 1=edge trigger).
+  * PXFLG: interrupt flag.
+
+For PXDAT, PXIM, PXPE, PXFUN, PXSEL, PXDIR and PXTRG there are corresponding "set" and "clear" registers. For PXFLG there is only a "clear" register.
+
+For example, if you want to set some bits of PXDAT, you must write a value with those bits set to PXDATS. If you want to clear some bits, you must write a value with those bits set to PXDATC.
+
+= Port A =
+
+This por is entirely used for SDRAM. These are the values read by an application running on the original firmware.
+
+|| PXDAT || 0x00000000 || 0000 0000 0000 0000 0000 0000 0000 0000 ||
+|| PXIM  || 0xFFFFFFFF || 1111 1111 1111 1111 1111 1111 1111 1111 ||
+|| PXPE  || 0x000000FF || 0000 0000 0000 0000 0000 0000 1111 1111 ||
+|| PXFUN || 0xFFFFFFFF || 1111 1111 1111 1111 1111 1111 1111 1111 ||
+|| PXSEL || 0x00000000 || 0000 0000 0000 0000 0000 0000 0000 0000 ||
+|| PXDIR || 0x00000000 || 0000 0000 0000 0000 0000 0000 0000 0000 ||
+|| PXTRG || 0x00000000 || 0000 0000 0000 0000 0000 0000 0000 0000 ||
+
+= Port B =
+
+Most of this port is also used for SDRAM.
+
+|| PXDAT || 0x00040000 || 0000 0000 0000 0100 0000 0000 0000 0000 ||
+|| PXIM  || 0xDFFFFFFF || 1101 1111 1111 1111 1111 1111 1111 1111 ||
+|| PXPE  || 0x02418000 || 0000 0010 0100 0001 1000 0000 0000 0000 ||
+|| PXFUN || 0x9FF9FFFF || 1001 1111 1111 1001 1111 1111 1111 1111 ||
+|| PXSEL || 0x20000000 || 0010 0000 0000 0000 0000 0000 0000 0000 ||
+|| PXDIR || 0x20000000 || 0010 0000 0000 0000 0000 0000 0000 0000 ||
+|| PXTRG || 0x20000000 || 0010 0000 0000 0000 0000 0000 0000 0000 ||
+
+= Port C =
+
+Most of this port is used for LCD/TV out.
+
+|| PXDAT || 0x00280000 || 0000 0000 0010 1000 0000 0000 0000 0000 ||
+|| PXIM  || 0x7FFDFFFF || 0111 1111 1111 1101 1111 1111 1111 1111 ||
+|| PXPE  || 0x703CFFFF || 0111 0000 0011 1100 1111 1111 1111 1111 ||
+|| PXFUN || 0x3714FFFF || 0011 0111 0001 0100 1111 1111 1111 1111 ||
+|| PXSEL || 0x00020000 || 0000 0000 0000 0010 0000 0000 0000 0000 ||
+|| PXDIR || 0x08280000 || 0000 1000 0010 1000 0000 0000 0000 0000 ||
+|| PXTRG || 0x00020000 || 0000 0000 0000 0010 0000 0000 0000 0000 ||
+
+Pin usage:
+
+||  0 || LCD D0 ||
+||  1 || LCD D1 ||
+||  2 || LCD D2 ||
+||  3 || LCD D3 ||
+||  4 || LCD D4 ||
+||  5 || LCD_D5 ||
+||  6 || LCD_D6 ||
+||  7 || LCD_D7 ||
+||  8 || LCD_D8 ||
+||  9 || LCD_D9 ||
+|| 10 || LCD_D10 ||
+|| 11 || LCD_D11 ||
+|| 12 || LCD_D12 ||
+|| 13 || LCD_D13 ||
+|| 14 || LCD_D14 ||
+|| 15 || LCD_D15 ||
+|| 16 || *GPIO input ???* ||
+|| 17 || *GPIO input START button (0=pressed)* ||
+|| 18 || LCD PCLK ||
+|| 19 || *GPIO RS# signal to LCD* ||
+|| 20 || LCD VSYNC ||
+|| 21 || *GPIO, output=1 * ||
+|| 22 || GPIO input ???* || 
+|| 23 || GPIO input ???* ||
+|| 24 || SDRAM WE1# ||
+|| 25 || SDRAM WE2# ||
+|| 26 || SDRAM WE3# ||
+|| 27 || *GPIO output AUDIO mute (0=no sound)* ||
+|| 28 || NAND FRE# ||
+|| 29 || NAND FWE# ||
+|| 30 || GPIO input, maybe used to sense NAND busy state? ||
+|| 31 || GPIO input, configured as low level interrupt by the ROM IPL (initial program loader) and never touched again by firmware ||
+
+= Port D =
+
+|| PXDAT || 0x80100098 || 1000 0000 0001 0000 0000 0000 1001 1000 ||
+|| PXIM  || 0xC7B13F98 || 1100 0111 1011 0001 0011 1111 1001 1000 ||
+|| PXPE  || 0xF1A02100 || 1111 0001 1010 0000 0010 0001 0000 0000 ||
+|| PXFUN || 0x27803F00 || 0010 0111 1000 0000 0011 1111 0000 0000 ||
+|| PXSEL || 0x3FCEC067 || 0011 1111 1100 1110 1100 0000 0110 0111 || 
+|| PXDIR || 0xC0300090 || 1100 0011 0000 0000 0000 0000 1001 0000 ||
+|| PXTRG || 0x384EC067 || 0011 1000 0100 1110 1100 0000 0110 0111 ||
