@@ -119,7 +119,7 @@ Pin usage:
 || 18 || LCD PCLK ||
 || 19 || *GPIO output RS# signal to LCD* ||
 || 20 || LCD VSYNC ||
-|| 21 || *GPIO, output=1 ???* ||
+|| 21 || _*GPIO, output=1 ???*_ ||
 || 22 || _*GPIO input ???*_ || 
 || 23 || _*GPIO input ???*_ ||
 || 24 || SDRAM WE1# ||
@@ -145,7 +145,7 @@ Pin usage:
 ||  1 || *GPIO input B button* ||
 ||  2 || *GPIO input Y button* ||
 ||  3 || _*GPIO input ???*_ ||
-||  4 || *GPIO output=1 ???* ||
+||  4 || _*GPIO output=1 ???*_ ||
 ||  5 || *GPIO input DPAD LEFT* ||
 ||  6 || *GPIO input DPAD UP* ||
 ||  7 || _*GPIO output AUDIO control (0=bad sound ONLY on earphones ???)*_ ||
