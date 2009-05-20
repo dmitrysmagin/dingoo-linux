@@ -81,7 +81,7 @@ Most of this port is also used for SDRAM.
 || 27 || SDRAM CS3# ||
 || 28 || SDRAM CS4# ||
 || 29 || *GPIO input miniSD detection (1=preset)* ||
-|| 30 || *GPIO input ???* ||
+|| 30 || _*GPIO input ???*_ ||
 || 31 || SDRAM WE0# ||
 
 = Port C =
@@ -114,22 +114,22 @@ Pin usage:
 || 13 || LCD_D13 ||
 || 14 || LCD_D14 ||
 || 15 || LCD_D15 ||
-|| 16 || *GPIO input ???* ||
+|| 16 || _*GPIO input ???*_ ||
 || 17 || *GPIO input START button* ||
 || 18 || LCD PCLK ||
 || 19 || *GPIO output RS# signal to LCD* ||
 || 20 || LCD VSYNC ||
 || 21 || *GPIO, output=1 ???* ||
-|| 22 || *GPIO input ???* || 
-|| 23 || *GPIO input ???* ||
+|| 22 || _*GPIO input ???*_ || 
+|| 23 || _*GPIO input ???*_ ||
 || 24 || SDRAM WE1# ||
 || 25 || SDRAM WE2# ||
 || 26 || SDRAM WE3# ||
 || 27 || *GPIO output AUDIO mute (0=no sound)* ||
 || 28 || NAND FRE# ||
 || 29 || NAND FWE# ||
-|| 30 || *GPIO input, maybe used to sense NAND busy state?* ||
-|| 31 || *GPIO input, configured as low level interrupt by the ROM IPL (initial program loader), probably unused thereafter* ||
+|| 30 || _*GPIO input, maybe used to sense NAND busy state?*_ ||
+|| 31 || _*GPIO input, configured as low level interrupt by the ROM IPL (initial program loader), probably unused thereafter*_ ||
 
 = Port D =
 
@@ -144,11 +144,11 @@ Pin usage:
 ||  0 || *GPIO input A button* ||
 ||  1 || *GPIO input B button* ||
 ||  2 || *GPIO input Y button* ||
-||  3 || *GPIO input ???* ||
+||  3 || _*GPIO input ???*_ ||
 ||  4 || *GPIO output=1 ???* ||
 ||  5 || *GPIO input DPAD LEFT* ||
 ||  6 || *GPIO input DPAD UP* ||
-||  7 || *GPIO output AUDIO control (0=bad sound ONLY on earphones ???)* ||
+||  7 || _*GPIO output AUDIO control (0=bad sound ONLY on earphones ???)*_ ||
 ||  8 || miniSD CMD ||
 ||  9 || miniSD CLK ||
 || 10 || miniSD D0 ||
@@ -157,20 +157,19 @@ Pin usage:
 || 13 || miniSD D3 ||
 || 14 || *GPIO input LEFT SHOULDER button* ||
 || 15 || *GPIO input RIGHT SHOULDER button* ||
-|| 16 || *GPIO input ???* (external driver present for sure because readback fails if configured as output ||
+|| 16 || _*GPIO input ???* (external driver present for sure because readback fails if configured as output*_ ||
 || 17 || *GPIO input SELECT button* ||
 || 18 || *GPIO input DPAD RIGHT* ||
 || 19 || *GPIO input X button* ||
-|| 20 || *GPIO output=1 ???* ||
-|| 21 || *GPIO output=0 ???* ||
-|| 22 || *GPIO input ???* ||
+|| 20 || _*GPIO output=1 ???*_ ||
+|| 21 || _*GPIO output=0 ???*_ ||
+|| 22 || _*GPIO input ???*_ ||
 || 23 || I2C SDA ||
 || 24 || I2C SCK ||
 || 25 || UART0 TXD ||
 || 26 || UART1 RXD ||
 || 27 || *GPIO input DPAD down* ||
 || 28 || *GPIO input USB power detection (1=power present)* ||
-|| 29 || *POWER BUTTON, but FUN=1 ??? jz4740.h says this pin does not have special functin !!!* ||
-|| 30 || *GPIO output=0 ???* ||
+|| 29 || _*POWER BUTTON, but FUN=1 ??? jz4740.h says this pin does not have special functin !!!*_ ||
+|| 30 || _*GPIO output=0 ???*_ ||
 || 31 || *GPIO output LCD backlight (1=max, use as PWM7 to obtain different levels* ||
-|| 31 ||
