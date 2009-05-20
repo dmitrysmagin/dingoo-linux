@@ -33,21 +33,72 @@ Yes... we have created and formatted a FAT32 parition that we are not going to u
 
 = Let's go =
 
+In first place download [http://www.rockbox.org/twiki/bin/viewfile/Main/OndaVX747?rev=2;filename=usbtool usbtool from rockbox].
+
 Set the Dingoo A320 in USB boot mode by holding down button B while resetting. This tells the CPU to boot from ROM code which will initialize the USB interface and wait for commands from the PC. Note that at this stage the CPU initialization is minimal, and thus SDRAM is not even available. All we have is the instruction caché to upload and execute code (and it is very small, so we cannot load the linux kernel there).
+
+When you start it in USB boot mode, the Dingoo seems bricked but if you run _dmesg_ you should see something like this:
+
+{{{
+[ 2018.565047] usb 1-3: new high speed USB device using ehci_hcd and address 11
+[ 2018.698513] usb 1-3: configuration #1 chosen from 1 choice
+}}}
 
 Now upload the hardware initialization program which will set up SDRAM so we can place more stuff there:
 
 {{{
 sudo usbtool 1 hwinit.bin 0x80000000
+
+[INFO] File size: 3144 bytes
+[INFO] Searching for device...
+[INFO] Found device, uploading application.
+[INFO] GET_CPU_INFO: JZ4740V1
+[INFO] SET_DATA_ADDRESS to 0x80000000... Done!
+[INFO] Sending data... Done!
+[INFO] Verifying data... Done!
+[INFO] Booting device STAGE1... Done!
+[INFO] Done!
 }}}
 
 Now upload the linux kernel itself:
 
 {{{
 sudo usbtool 1 zImage 0x80600000
+
+[INFO] File size: 1220608 bytes
+[INFO] Searching for device...
+[INFO] Found device, uploading application.
+[INFO] GET_CPU_INFO: JZ4740V1
+[INFO] SET_DATA_ADDRESS to 0x80600000... Done!
+[INFO] Sending data... Done!
+[INFO] Verifying data... Done!
+[INFO] Booting device STAGE1... Done!
+[INFO] Done!
 }}}
 
-And that's it. You'll see the linux boot process on screen. At some point, your PC will recognize a new USB device (ACM communication device) and create /dev/ttyACM0. You can use minicom (57600 8N1, no flow control) to login into your console (user 'root', no password).
+And that's it. You'll see the linux boot process on screen. At some point, your PC will recognize a new USB device (ACM communication device) and create /dev/ttyACM0. You can use minicom (57600 8N1, no flow control) to login into your console (user 'root', no password). To do this:
+
+{{{
+sudo apt-get install minicom
+}}}
+
+After that create at $HOME a file named _.minirc.configuration_ with this content:
+
+{{{
+pu port             /dev/ttyACM0
+pu baudrate         57600
+pu bits             8
+pu parity           N
+pu stopbits         1
+pu rtscts           No
+}}}
+
+Then you run this to log into your Dingoo:
+
+{{{
+minicom configuration
+}}}
+
 
 IMPORTANT: the console kernel will oops (the screen flashes) if you disconnect the USB cable. This is a known problem that is being investigated.
 
