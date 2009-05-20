@@ -148,7 +148,7 @@ Pin usage:
 ||  4 || _*GPIO output=1 ???*_ ||
 ||  5 || *GPIO input DPAD LEFT* ||
 ||  6 || *GPIO input DPAD UP* ||
-||  7 || _*GPIO output AUDIO control (0=bad sound ONLY on earphones ???)*_ ||
+||  7 || _*GPIO output AUDIO control (0=bad sound ONLY from earphones ???)*_ ||
 ||  8 || miniSD CMD ||
 ||  9 || miniSD CLK ||
 || 10 || miniSD D0 ||
@@ -157,7 +157,7 @@ Pin usage:
 || 13 || miniSD D3 ||
 || 14 || *GPIO input LEFT SHOULDER button* ||
 || 15 || *GPIO input RIGHT SHOULDER button* ||
-|| 16 || _*GPIO input ???* (external driver present for sure because readback fails if configured as output*_ ||
+|| 16 || _*GPIO input ???* (external driver present for sure because readback fails if configured as output)_ ||
 || 17 || *GPIO input SELECT button* ||
 || 18 || *GPIO input DPAD RIGHT* ||
 || 19 || *GPIO input X button* ||
@@ -170,6 +170,6 @@ Pin usage:
 || 26 || UART1 RXD ||
 || 27 || *GPIO input DPAD down* ||
 || 28 || *GPIO input USB power detection (1=power present)* ||
-|| 29 || _*POWER BUTTON, but FUN=1 ??? jz4740.h says this pin does not have special functin !!!*_ ||
+|| 29 || _*POWER BUTTON, but FUN=1 ??? (jz4740.h says this pin does not have special functi0n !!!)*_ ||
 || 30 || _*GPIO output=0 ???*_ ||
 || 31 || *GPIO output LCD backlight (1=max, use as PWM7 to obtain different levels* ||
