@@ -37,7 +37,7 @@ Primero descargar el [http://www.rockbox.org/twiki/bin/viewfile/Main/OndaVX747?r
 Pon la Dingoo A320 en modo USB boot manteniendo apretado el botón B mientras hacemos un reset. Esto le dice a la CPU que arranque desde el código en ROM que inicializa el interfaz USB y espere comandos desde el PC. Fíjate que en esta etapa la inicialización de la CPU es mínima y ni siquiera la SDRAM está disponible. Todo lo que tenemos es la caché de instrucciones para cargar y ejecutar código (y es muy pequeña, así que no podemos cargar el kernel allí).
 
 
-Al arrancar en modo USB boot, la Dingoo parecerá muerta pero si hacéis un dmesg deberíais ver algo así:
+Al arrancar en modo USB boot, la Dingoo parecerá muerta pero si hacéis un _dmesg_ deberíais ver algo así:
 
 {{{
 [ 2018.565047] usb 1-3: new high speed USB device using ehci_hcd and address 11
