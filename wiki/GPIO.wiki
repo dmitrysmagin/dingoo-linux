@@ -80,7 +80,7 @@ Most of this port is also used for SDRAM.
 || 26 || SDRAM CS2# ||
 || 27 || SDRAM CS3# ||
 || 28 || SDRAM CS4# ||
-|| 29 || *GPIO input miniSD detection (1=preset)* ||
+|| 29 || *GPIO input miniSD detection (1=inserted)* ||
 || 30 || _*GPIO input ???*_ ||
 || 31 || SDRAM WE0# ||
 
