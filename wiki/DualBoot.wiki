@@ -124,7 +124,7 @@ Conclusions:
 
 Obviously the SPL in pages 0-3 loads the OS in pages 128-511. We should tap into the boot process as soon as possible to avoid the problems I faced when using the ccpmp.bin patch approach, so this is what I intend to do: patch the SPL code to check for select key. If pressed, load OS from pages 4-127 instead of 128-511. And place customized code (u-boot probably) in pages 4-127, using only the first 2KB of each pages because that's what the SPL will load. That means custom code can be at most 248KB long.
 
-Things to do:
+Tasks to do:
 
   * Read the first 2KB from pages 0-3, join it all and disassemble it.
   * Understand how the SPL code loads the OS from pages 128-511, in particular how it interprets the OOB data (which it reads not from the OOB area but from the second half of the pages).
