@@ -90,3 +90,34 @@ The exception handler is obviously not part of my u-boot code but part of a prev
 
 So, either we find a way to deinitialize the MMU to a state where u-boot or the kernel can execute without problems, or find an earlier point to tap into the boot process.
 
+
+
+= Looking at the contents of NAND flash =
+
+The ccpmp.bin patch approach had the great advantage of using the standard firmware upgrade procedure to write to the NAND flash. If we need to tap into the boot process at an earlier stage, we need to see what's in the NAND flash.
+
+First, note that the IPL (initial program loader) that gets executed from ROM on boot only handles 512 and 2048 NAND page sizes. I've seen a picture from an A320 with two 2GB, 2048 page size NAND chips, but mine and some other latest A320 do have a single 4GB, 4096 page size NAND chip. Keep in mind that the IPL will load 8KB of code to the instruction caché from the first 4 pages of NAND flash, but will do so assuming that the page size is 2048.
+
+My A320 has a K9LBG08U0M chip, which is 4GB, 4096 bytes page size, 128 pages per erase block, 2 planes. This means that the erase block size is 512KB (4KB * 128).
+
+You can examine the NAND flash contents by using the USB_Boot.exe tool provided by Ingenic [ftp://ftp.ingenic.cn/3sw/00tools/usb_boot/tools/usbboot1.4b-tools.zip here]. You need a configuration file that you can find in the download section (USBBoot.cfg). Note that this configuration file is set up for my hardware (single 4GB flash chip) and your A320 might be one of the earlier ones with two 2GB chips.
+
+This is what I've found out so far:
+
+|| *Pages* || *Data area* || *OOB area* ||
+|| 0-3 || "Normal" data in first 2KB of page, OOB-like data at the start of second 2KB || Erased ||
+|| 4-127 || Erased || Erased ||
+|| 128-511 || "Normal" data in first 2KB of page, OOB-like data at the start of second 2KB || Erased ||
+|| 512-513 || Erased || OOB data, unknown format ||
+|| 514-639 || Erased || Erased ||
+|| 640- || Normal data using the whole 4KB page || OOB data, unknown format ||
+
+Notes:
+  * Actually, the 128-511 page area contains data only from page 128 to 290, rest is erased.
+
+Conclusions:
+  * The first four pages contain the SPL (secondary program loader), but it is stored in the first 2KB of each page, since the IPL will think this is a 2KB page size NAND. I guess it will treat the first bytes if the second 2KB half as if it was OOB data.
+  * The rest of this erase block is empty.
+  * Pages 128-512 contain the OS, and it is loaded by the SPL just like the IPL did: thinking this is a 2KB page size NAND, thus the data is in the first 2KB of each page and the first bytes of the second 2KB page are treated as if it was OOB data.
+  * The erase block corresponding to pages 512-639 is empty except for OOB data in pages 512-513 (REAL OOB DATA, placed in the OOB area, not in the second 2KB of the page data). Unknown purpose. Might be a parameter area, startup LCD backlight brightness and such?.
+  * Page 640 and up contain data using the whole 4KB page and the OOB area is used too.
