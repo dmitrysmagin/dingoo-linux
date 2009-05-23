@@ -1,0 +1,92 @@
+= Introduction =
+
+Dual boot refers to the ability to choose between the original firmware and linux when booting you A320.
+
+At present linux support on the A320 is usable for programming, and will soon be usable by final users, but hardware support is still far from being complete and thus linux is NOT yet a valid replacement for original firmware, so dual boot is a MUST.
+
+
+
+= Initial try =
+
+Dual boot instalation must be as easy as possible for non expert users, so the ideal way to install it would be by using the standard firmware upgrade procedure. As we have tools to alter the .HXF contents and we know that ccpmp.bin is the main firmware execeutable, altering that file seemed like an easy way to tap into the A320 original firmware boot process.
+
+The ccpmp.bin file is 5MB long and if you get a peek at its contents you will notice that a little more than the last 2MB are empty. Also we know that ccpmp.bin is loaded at address 0x80004000 and that control is transfered to address 0x80004008.
+
+This is what I did:
+
+  * Overwrite the first instructions of ccpmp.bin by a jump to location +3MB.
+  * At location +3MB place code that checks if the select button is pressed.
+  * If select button is NOT pressed, execute the instructions that were overwritten at the beginning of ccpmp.bin and jump to the point just past those instructions, so the normal boot process continues.
+  * If select button is pressed, jump to u-boot code placed at location +4MB. This u-boot code has been specially compiled for the memory address where I know this code will be loaded (0x80004000 + 4MB = 0x80404000).
+  * Modify the second DWORD of ccpmp.bin which is the load size used by the previous boot stage (whatever it is). I set it to 0x00500000 so I get sure the whole ccpmp.bin file is loaded into memory.
+
+It sort of worked: the normal boot process (select key not pressed) worked fine, and when I pressed the select key the u-boot code got executed, but at some point it caused a TLB exception:
+
+{{{
+NAND Booting...ECD755B6..
+loader size = 0x00051670
+..
+OK
+NAND Loading...
+get ccpmp_config ok!!!
+ccpmp_config.firmware_name = A320.HXF. ccpmp_config.update_key = 123, ccpmp_con.
+loader normal mode...
+Creating ftl device...
+id:EC D7 55 B6 78
+id:00 00 00 00 00
+id:00 00 00 00 00
+id:00 00 00 00 00
+OK.
+usb_connect = 1
+into lcd_init.
+loader -- into lcd_init.
+into init_lcd_gpio.
+out init_lcd_gpio.
+loader -- init_lcd_gpio ok.
+into Init_LCM_MOUDLE_ILI9325!!!
+out Init_LCM_MOUDLE_ILI9325!!!
+loader -- init_lcd_register ok.
+loader -- out lcd_init.
+Start decode...
+OK 153602.
+out lcd_init.
+get_lcd_brightness -- value = 3.
+len is 0x  500000
+os_len = 0x  500000. checksum = 0x26f75489.
+1 - ret = 0
+2 - ret = 1
+Run image...
+
+
+U-Boot 1.1.6 (May 12 2009 - 02:54:16)
+
+Board: Dingoo A320 (CPU Speed 336 MHz)
+DRAM:  32 MB
+Flash:  0 kB
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Hit any key to stop autoboot:  0 
+MMC card found
+=============================================================
+Exception:
+SP:81EAAA28
+EPC:81FBBEE8
+CAUSE:00800008  TLB load
+Reg dump:
+ ra = 81FC1D38 fp = 00000027 gp = 81FCBDD0 t9 = 81FBBED8
+ t8 = FFFFFFFF s7 = 00000003 s6 = 00000000 s5 = 0000005C
+ s4 = B0010168 s3 = B0010158 s2 = 81FCE490 s1 = 81FCE490
+ s0 = 00000000 t7 = 00000000 t6 = 00000000 t5 = 81FCA844
+ t4 = 00000020 t3 = 81EAAD48 t2 = 00000004 t1 = 00000009
+ t0 = 81FCDFBC a3 = 00000000 a2 = 00000004 a1 = 00000000
+ a0 = 81FCDFBC v1 = 00000012 v0 = 00000000 AT = 00000000
+ LO = 00001CD1 HI = 00003000 ST = 10000402 EPC = 81FBBEE8
+}}}
+
+The exception handler is obviously not part of my u-boot code but part of a previous boot stage, which seems to have gone quite far initializing the execution environment, including the MMU. u-boot expects an after-reset execution environment and fails. I tried embedding the kernel image itself into ccpmp.bin instead of u-boot but the kernel also seems to have problems with an already initialized MMU.
+
+So, either we find a way to deinitialize the MMU to a state where u-boot or the kernel can execute without problems, or find an earlier point to tap into the boot process.
+
