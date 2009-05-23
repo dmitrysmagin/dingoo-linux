@@ -98,7 +98,7 @@ The ccpmp.bin patch approach had the great advantage of using the standard firmw
 
 First, note that the IPL (initial program loader) that gets executed from ROM on boot only handles 512 and 2048 NAND page sizes. I've seen a picture from an A320 with two 2GB, 2048 page size NAND chips, but mine and some other latest A320 do have a single 4GB, 4096 page size NAND chip. Keep in mind that the IPL will load 8KB of code to the instruction caché from the first 4 pages of NAND flash, but will do so assuming that the page size is 2048.
 
-My A320 has a K9LBG08U0M chip, which is 4GB, 4096 bytes page size, 128 pages per erase block, 2 planes. This means that the erase block size is 512KB (4KB * 128).
+My A320 has a K9LBG08U0M chip, which is 4GB, 4096 bytes page size, 128 pages per erase block, 2 planes. This means that the erase block size is 512KB (4KB x 128).
 
 You can examine the NAND flash contents by using the USB_Boot.exe tool provided by Ingenic [ftp://ftp.ingenic.cn/3sw/00tools/usb_boot/tools/usbboot1.4b-tools.zip here]. You need a configuration file that you can find in the download section (USBBoot.cfg). Note that this configuration file is set up for my hardware (single 4GB flash chip) and your A320 might be one of the earlier ones with two 2GB chips.
 
