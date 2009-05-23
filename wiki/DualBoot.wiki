@@ -121,3 +121,12 @@ Conclusions:
   * Pages 128-512 contain the OS, and it is loaded by the SPL just like the IPL did: thinking this is a 2KB page size NAND, thus the data is in the first 2KB of each page and the first bytes of the second 2KB page are treated as if it was OOB data.
   * The erase block corresponding to pages 512-639 is empty except for OOB data in pages 512-513 (REAL OOB DATA, placed in the OOB area, not in the second 2KB of the page data). Unknown purpose. Might be a parameter area, startup LCD backlight brightness and such?.
   * Page 640 and up contain data using the whole 4KB page and the OOB area is used too.
+
+Obviously the SPL in pages 0-3 loads the OS in pages 128-511. We should tap into the boot process as soon as possible to avoid the problems I faced when using the ccpmp.bin patch approach, so this is what I intend to do: patch the SPL code to check for select key. If pressed, load OS from pages 4-127 instead of 128-511. And place customized code (u-boot probably) in pages 4-127, using only the first 2KB of each pages because that's what the SPL will load. That means custom code can be at most 248KB long.
+
+Things to do:
+
+  * Read the first 2KB from pages 0-3, join it all and disassemble it.
+  * Understand how the SPL code loads the OS from pages 128-511, in particular how it interprets the OOB data (which it reads not from the OOB area but from the second half of the pages).
+  * Patch the SPL code to load from pages 4-127 if select button is pressed.
+  * Place custom code in pages 4-127 (using only first 2KB of each page for code and placing correct OOB data in first bytes of second 2KB).
