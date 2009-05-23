@@ -136,7 +136,7 @@
 #define CFG_NAND_PAGE_SIZE      4096
 #define CFG_NAND_BLOCK_SIZE	(512 << 10)	/* NAND chip block size		*/
 #define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
-#define CFG_NAND_ECC_POS        6               /* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
+#define CFG_NAND_ECC_POS        28              /* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
 
 #define CFG_MAX_NAND_DEVICE     1
 #define NAND_MAX_CHIPS          1
