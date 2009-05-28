@@ -4,9 +4,9 @@ How to get linux up and running in your A320 in a few steps (from a Linux PC):
 = Requirements =
 
   * usbtool: will let you control the console when in USB boot mode. Get a binary from the downloads section or get the source from [http://jz-hacking.googlecode.com/files/jz_tools_20090224.tar.bz2 here] and compile it yourself.
-  * hwinit: this is a minimal hardware initialization program.
+  * hwinit.bin: this is a minimal hardware initialization program.
   * zImage: this is the linux kernel.
-  * rootfs: this is a minimal root file system.
+  * rootfs.bz2: this is a minimal root file system.
 
 = Prepare the root filesystem =
 
