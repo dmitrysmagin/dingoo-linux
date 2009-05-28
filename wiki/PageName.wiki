@@ -1,0 +1,42 @@
+How to get linux up and running in your A320 in a few steps (from a Windows PC):
+
+= Requirements =
+
+  * USB_Boot.exe: get it from the Ingenic FTP site (ftp://ftp.ingenic.cn/3sw/00tools/usb_boot/tools/usbboot1.4b-tools.zip)
+  * hwinit.bin: this is a minimal hardware initialization program.
+  * zImage: this is the linux kernel.
+  * rootfs.bz2: this is a minimal root file system.
+
+= Previous reading =
+
+Go read the QuickStart guide from linux and make sure you understand what's going on there.
+
+= Prepare the root filesystem =
+
+(sorry, I don't know a proper way to do this under Windows... maybe I'll find a way to make linux in the A320 mount a FAT32 partition as the rootfs)
+
+= Let's go =
+
+Download usb_boot from the Ingenic FTP site and unpack it. Replace the included USBBoot.cfg file by the one you can find in the download section.
+
+Copy zImage in the *same folder* where you unpacked the usb_boot tool.
+
+Now place the A320 in USB boot mode (reset while holding the B button pressed), launch the USB_Boot.exe tool and execute these commands:
+
+{{{
+boot 0
+load 0x80600000 zImage 0
+go 0x80600000 0
+}}}
+
+You should see linux boot messages on the A320 LCD.
+
+When the boot completes, linux will recognize a new hardware device, which is the CDC ACM serial port. You need a special driver to make this serial port work. As soon as I know where to find it I'll post a link.
+
+= How do I upload files? =
+
+(See the linux QuickStart)
+
+= How do I compile programs? =
+
+(To be completed)
