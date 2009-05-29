@@ -31,7 +31,7 @@ go 0x80600000 0
 
 You should see linux boot messages on the A320 LCD.
 
-When the boot completes, linux will recognize a new hardware device, which is the CDC ACM serial port. You need a special driver to make this serial port work. As soon as I know where to find it I'll post a link.
+When the boot completes, linux will recognize a new hardware device, which is the CDC ACM serial port. You need a special driver to make this serial port work: get it [http://archive.gp2x.de/cgi-bin/cfiles.cgi?0,0,0,0,8,1191|here].
 
 = How do I upload files? =
 
