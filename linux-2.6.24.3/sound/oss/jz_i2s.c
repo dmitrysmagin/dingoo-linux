@@ -4,8 +4,16 @@
  *  JzSOC On-Chip I2S audio driver.
  *
  *  Copyright (C) 2005 by Junzheng Corp.
+ *  Copyright (C) 2009 by Ignacio Garcia Perez <iggarpe@gmail.com>
+ *
  *  Modified by cjfeng on Aug 9,2007,and not any bug on Jz4730 using
  *  dma channel 4&3,noah is tested.
+ *
+ *  Modified by iggarpe:
+ *  - Wiped out 18 bit support (record_fill_2x18_s was missing anyway).
+ *  - Implemented S8 fillers.
+ *  - Implemented U16 fillers.
+ *  - Lots of fixes and optimizations of all fillers.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -629,235 +637,324 @@ static int jz_audio_set_speed(int dev, int rate)
 
 static int record_fill_1x8_u(unsigned long dst_start, int count, int id)
 {
-	int cnt = 0;
-	unsigned long data;
+	int cnt;
+	unsigned long d1;
 	volatile unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
 	volatile unsigned char *dp = (unsigned char*)dst_start;
 
-	while (count > 0) {
-		count -= 2;   /* count in dword */
-		cnt++;
-		data = *(s++);
-		*(dp ++) = ((data << 16) >> 24) + 0x80;
-		s++;	      /* skip the other channel */
+	for (cnt = 0; count > 0; count -= 2, cnt++) {
+		d1 = *(s++);
+		*(dp++) = (d1 >> 8) + 0x80;
+		s++;	/* skip the other channel */
 	}
 
 	return cnt;
 }
 
+static int record_fill_1x8_s(unsigned long dst_start, int count, int id)
+{
+	int cnt;
+	unsigned long d1;
+	volatile unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	volatile unsigned char *dp = (unsigned char*)dst_start;
+
+	for (cnt = 0; count > 0; count -= 2, cnt++) {
+		d1 = *(s++);
+		*(dp++) = d1 >> 8;
+		s++;	/* skip the other channel */
+	}
+
+	return cnt;
+}
 
 static int record_fill_2x8_u(unsigned long dst_start, int count, int id)
 {
-	int cnt = 0;
+	int cnt;
 	unsigned long d1, d2;
 	volatile unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
 	volatile unsigned char *dp = (unsigned char*)dst_start;
-    
-	while (count > 0) {
-		count -= 2;
-		cnt += 2;
+
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) { 
 		d1 = *(s++);
-		*(dp ++) = ((d1 << 16) >> 24) + 0x80;
 		d2 = *(s++);
-		*(dp ++) = ((d2 << 16) >> 24) + 0x80;
+		*(dp++) = (d1 >> 8) + 0x80;
+		*(dp++) = (d2 >> 8) + 0x80;
 	}
 	
 	return cnt;
 }
 
+static int record_fill_2x8_s(unsigned long dst_start, int count, int id)
+{
+	int cnt;
+	unsigned long d1, d2;
+	volatile unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	volatile unsigned char *dp = (unsigned char*)dst_start;
+   
+	for (cnt = 0; count > 0; count -= 2, cnt += 2 ) { 
+		d1 = *(s++);
+		d2 = *(s++);
+		*(dp++) = d1 >> 8;
+		*(dp++) = d2 >> 8;
+	}
+	
+	return cnt;
+}
+
+static int record_fill_1x16_u(unsigned long dst_start, int count, int id)
+{
+	int cnt;
+	unsigned long d1;
+	unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	unsigned short *dp = (unsigned short *)dst_start;
+	
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) { 
+		d1 = *(s++);
+		*(dp++) = d1 + 0x8000;
+		s++;	/* skip the other channel */
+	}
+
+	return cnt;
+}
 
 static int record_fill_1x16_s(unsigned long dst_start, int count, int id)
 {
-    int cnt = 0;
-    unsigned long d1;
-    unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
-    unsigned short *dp = (unsigned short *)dst_start;
-  
-    while (count > 0) {
-	    count -= 2;	   /* count in dword */
-	    cnt += 2;	   /* count in byte */
-	    d1 = *(s++);
-	    *(dp ++) = (d1 << 16) >> 16;
-	    s++;	   /* skip the other channel */
-    }
+	int cnt;
+	unsigned long d1;
+	unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	unsigned short *dp = (unsigned short *)dst_start;
 
-    return cnt;
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
+		d1 = *(s++);
+		*(dp++) = d1;
+		s++;	   /* skip the other channel */
+	}
+
+	return cnt;
 }
 
+static int record_fill_2x16_u(unsigned long dst_start, int count, int id)
+{
+	int cnt;
+	unsigned long d1, d2;
+	unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	unsigned short *dp = (unsigned short *)dst_start;
+
+	for (cnt = 0; count > 0; count -= 2, cnt += 4) {
+		d1 = *(s++);
+		d2 = *(s++);
+		if(abnormal_data_count > 0) { 
+			d1 = d2 = 0;
+			abnormal_data_count --;
+		}
+		*(dp++) = d1 + 0x8000;
+        	*(dp++) = d2 + 0x8000;
+	}
+
+	return cnt;
+}
 
 static int record_fill_2x16_s(unsigned long dst_start, int count, int id)
 {
-    int cnt = 0;
-    unsigned long d1, d2;
-    unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
-    unsigned short *dp = (unsigned short *)dst_start;
-    while (count > 0) {
-        count -= 2;	/* count in dword */
-        cnt += 4;	/* count in byte */
-        d1 = *(s++);
-        d2 = *(s++);
-	if(abnormal_data_count > 0) { 
-		d1 = d2 = 0;
-		abnormal_data_count --;
-	}
-	*(dp ++) = (d1 << 16) >> 16;
-        *(dp ++) = (d2 << 16) >> 16;
-    }
+	int cnt;
+	unsigned long d1, d2;
+	unsigned long *s = (unsigned long*)(*(in_dma_buf + id));
+	unsigned short *dp = (unsigned short *)dst_start;
 
-    return cnt;
+	for (cnt = 0; count > 0; count -= 2, cnt += 4) {
+		d1 = *(s++);
+		d2 = *(s++);
+		if(abnormal_data_count > 0) { 
+			d1 = d2 = 0;
+			abnormal_data_count --;
+		}
+		*(dp++) = d1;
+        	*(dp++) = d2;
+	}
+
+	return cnt;
 }
 
 static void replay_fill_1x8_u(signed long src_start, int count, int id)
 {
-	int cnt = 0;
-	unsigned char data;
-	unsigned long ddata;
+	int cnt;
+	signed long dd1;
 	volatile unsigned char *s = (unsigned char *)src_start;
-	volatile unsigned long *dp = (unsigned long*)(*(out_dma_buf + id));
+	volatile signed long *dp = (unsigned long*)(*(out_dma_buf + id));
 
-	while (count > 0) {
-		count--;
-		cnt += 1;
-		data = *(s++) - 0x80;
-		ddata = (unsigned long) data << 8;
-		*(dp ++) = ddata;
-		*(dp ++) = ddata;
-
-		/* save last left and right */
-		if(count == 1) {
-			save_last_samples[id].left = ddata;
-			save_last_samples[id].right = ddata;
-		}
+	for (cnt = 0; count > 0; count--, cnt += 2) {
+		dd1 = ((signed long)((*s++) - 0x80) << 8) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd1;
 	}
-	cnt = cnt * 2 * jz_audio_b;
-	*(out_dma_buf_data_count + id) = cnt;
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	if(cnt > 0) {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd1;
+	}
 }
 
+static void replay_fill_1x8_s(signed long src_start, int count, int id)
+{
+	int cnt;
+	signed long dd1;
+	volatile signed char *s = (unsigned char *)src_start;
+	volatile signed long *dp = (unsigned long*)(*(out_dma_buf + id));
+
+	for (cnt = 0; count > 0; count--, cnt += 2) {
+		dd1 = ((signed long)(*s++) << 8) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd1;
+	}
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	if(cnt > 0) {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd1;
+	}
+}
 
 static void replay_fill_2x8_u(signed long src_start, int count, int id)
 {
-	int cnt = 0;
-	unsigned char d1;
-	unsigned long dd1;
+	int cnt;
+	signed long dd1, dd2;
 	volatile unsigned char *s = (unsigned char *)src_start;
-	volatile unsigned long *dp = (unsigned long*)(*(out_dma_buf + id));
+	volatile signed long *dp = (unsigned long*)(*(out_dma_buf + id));
 
-	while (count > 0) {
-		count -= 1;
-		cnt += 1 ;
-		d1 = *(s++) - 0x80;
-		dd1 = (unsigned long) d1 << 8;
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
+		dd1 = ((signed long)((*s++) - 0x80) << 8) >> codec_volue_shift;
+		dd2 = ((signed long)((*s++) - 0x80) << 8) >> codec_volue_shift;
 		*(dp ++) = dd1;
-		/* save last left */
-		if(count == 2)
-			save_last_samples[id].left = dd1;
-		/* save last right */
-		if(count == 1)
-			save_last_samples[id].right = dd1;
+		*(dp ++) = dd2;
 	}
-	cnt *= jz_audio_b;
-	*(out_dma_buf_data_count + id) = cnt;
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	printk("### replay_fill_2x8_u %d %d\n", count, id);
+
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd2;
+	}
 }
 
+static void replay_fill_2x8_s(signed long src_start, int count, int id)
+{
+	int cnt;
+	signed long dd1, dd2;
+	volatile signed char *s = (unsigned char *)src_start;
+	volatile signed long *dp = (unsigned long*)(*(out_dma_buf + id));
+
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
+		dd1 = ((signed long)(*s++) << 8) >> codec_volue_shift;
+		dd2 = ((signed long)(*s++) << 8) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd2;
+	}
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd2;
+	}
+}
+
+static void replay_fill_1x16_u(signed long src_start, int count, int id)
+{
+	int cnt;
+	signed long dd1;
+	volatile unsigned short *s = (signed short *)src_start;
+	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
+      
+	for (cnt = 0; count > 0; count--, cnt += 2) {
+		dd1 = (signed long)((*s++) - 0x8000) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd1;
+	}
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd1;
+	}
+}
 
 static void replay_fill_1x16_s(signed long src_start, int count, int id)
 {
-	int cnt = 0;
-	signed short d1;
-	signed long l1;
+	int cnt;
+	signed long dd1;
 	volatile signed short *s = (signed short *)src_start;
 	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
-       
-	while (count > 0) {
-		count -= 2;
-		cnt += 2 ;
-		d1 = *(s++);
-		l1 = (signed long)d1;
-#if defined(CONFIG_I2S_ICODEC)
-		l1 >>= codec_volue_shift;
-#endif
-		*(dp ++) = l1;
-		*(dp ++) = l1;
-
-		/* save last left and right */
-		if(count == 1) {
-			save_last_samples[id].left = l1;
-			save_last_samples[id].right = l1;
-		}
+      
+	for (cnt = 0; count > 0; count--, cnt += 2) {
+		dd1 = (signed long)(*s++) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd1;
 	}
-	cnt = cnt * 2 * jz_audio_b;
-	*(out_dma_buf_data_count + id) = cnt;
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd1;
+	}
+}
+
+static void replay_fill_2x16_u(signed long src_start, int count, int id)
+{
+	int cnt;
+	signed long dd1, dd2;
+	volatile unsigned short *s = (signed short *)src_start;
+	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
+
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
+		dd1 = (signed long)((*s++) - 0x8000) >> codec_volue_shift;
+		dd2 = (signed long)((*s++) - 0x8000) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd2;
+	}
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
+   
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd2;
+	}
 }
 
 static void replay_fill_2x16_s(signed long src_start, int count, int id)
 {
-	int cnt = 0;
-	signed short d1;
-	signed long l1;
+	int cnt;
+	signed long dd1, dd2;
 	volatile signed short *s = (signed short *)src_start;
 	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
-#if defined(CONFIG_I2S_ICODEC)
-	int mute_cnt = 0;
-	signed long tmp1,tmp2;
-	volatile signed long *before_dp;
-	int sam_rate = jz_audio_rate / 20;
 
-	tmp1 = tmp2 = 0;
-	while (count > 0) {
-		count -= 2;
-		cnt += 2;
-		d1 = *(s++);
-		
-		l1 = (signed long)d1;
-		l1 >>= codec_volue_shift;
+	printk("### replay_fill_2x16_s %d %d\n", count, id);
 
-		if(l1 == 0) {
-			mute_cnt ++;
-			if(mute_cnt >= sam_rate) {
-				before_dp = dp - 10;
-				*(before_dp) = (signed long)1;
-				before_dp = dp - 11;
-				*(before_dp) = (signed long)1;
-				mute_cnt = 0;
-			}
-		} else
-			mute_cnt = 0;
-
-		*(dp ++) = l1;
-		
-		tmp1 = tmp2;
-		tmp2 = l1;
+	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
+		dd1 = (signed long)(*s++) >> codec_volue_shift;
+		dd2 = (signed long)(*s++) >> codec_volue_shift;
+		*(dp ++) = dd1;
+		*(dp ++) = dd2;
 	}
+	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
    
-	/* save last left */
-	save_last_samples[id].left = tmp1;
-	/* save last right */
-	save_last_samples[id].right = tmp2;
-#endif
-#if defined(CONFIG_I2S_DLV)
-	while (count > 0) {
-		count -= 2;
-		cnt += 2;
-		d1 = *(s++);
-		
-		l1 = (signed long)d1;
-		
-		*(dp ++) = l1;
+	if(cnt > 0)  {
+		save_last_samples[id].left = dd1;
+		save_last_samples[id].right = dd2;
 	}
-#endif
-	cnt *= jz_audio_b;
-	*(out_dma_buf_data_count + id) = cnt;
 }
+
 
 static unsigned int jz_audio_set_format(int dev, unsigned int fmt)
 {
 	switch (fmt) {
 	case AFMT_U8:
+	case AFMT_S8:
 		__i2s_set_oss_sample_size(8);
 		__i2s_set_iss_sample_size(8);
 		jz_audio_format = fmt;
 		jz_update_filler(jz_audio_format,jz_audio_channels);
 		break;	
+	case AFMT_U16_LE:
 	case AFMT_S16_LE:
 #if defined(CONFIG_I2S_DLV)
 		/* DAC path and ADC path */
@@ -1177,7 +1274,7 @@ static int __init jz_i2s_codec_init(struct jz_i2s_controller_info *controller)
 static void jz_update_filler(int format, int channels)
 {
 #define TYPE(fmt,ch) (((fmt)<<2) | ((ch)&3))
-	
+
 	switch (TYPE(format, channels)) 
 	{
 
@@ -1186,15 +1283,35 @@ static void jz_update_filler(int format, int channels)
 		replay_filler = replay_fill_1x8_u;
 		record_filler = record_fill_1x8_u;
 		break;
+	case TYPE(AFMT_S8, 1):
+		jz_audio_b = 4; /* 4bytes * 8bits =32bits */
+		replay_filler = replay_fill_1x8_s;
+		record_filler = record_fill_1x8_s;
+		break;
 	case TYPE(AFMT_U8, 2):
 		jz_audio_b = 4;
 		replay_filler = replay_fill_2x8_u;
 		record_filler = record_fill_2x8_u;
 		break;
+	case TYPE(AFMT_S8, 2):
+		jz_audio_b = 4;
+		replay_filler = replay_fill_2x8_s;
+		record_filler = record_fill_2x8_s;
+		break;
+	case TYPE(AFMT_U16_LE, 1):
+		jz_audio_b = 2; /* 2bytes * 16bits =32bits */
+		replay_filler = replay_fill_1x16_u;
+		record_filler = record_fill_1x16_u;
+		break;
 	case TYPE(AFMT_S16_LE, 1):
 		jz_audio_b = 2; /* 2bytes * 16bits =32bits */
 		replay_filler = replay_fill_1x16_s;
 		record_filler = record_fill_1x16_s;
+		break;
+	case TYPE(AFMT_U16_LE, 2):
+		jz_audio_b = 2;
+		replay_filler = replay_fill_2x16_u;
+		record_filler = record_fill_2x16_u;
 		break;
 	case TYPE(AFMT_S16_LE, 2):
 		jz_audio_b = 2;
@@ -2669,6 +2786,8 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 		return ret ? ret : -EFAULT;
 	}
 
+	printk("### copy from user %u bytes\n", count);
+
 	while (left_count > 0) {
 	audio_write_back:
 		if (file->f_flags & O_NONBLOCK)
@@ -2679,6 +2798,7 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 			else
 				sleep_on(&tx_wait_queue);
 		}
+		printk("### here we are... copy_count %d\n", copy_count);
 		/* the end fragment size in this write */
 		if (ret + copy_count > count)
 			copy_count = count - ret;
@@ -2729,6 +2849,8 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 	return ret;
 }
 
+/* TODO(IGP): though this function is not currently used, it should support 8U sample format */
+
 #if defined(CONFIG_I2S_ICODEC)
 static void write_mute_to_dma_buffer(signed long l_sample, signed long r_sample)
 {
@@ -2738,10 +2860,9 @@ static void write_mute_to_dma_buffer(signed long l_sample, signed long r_sample)
 	unsigned long l_sample_count,r_sample_count,sample_count;
 	struct jz_i2s_controller_info *controller = i2s_controller;
 	signed int left_sam=0,right_sam=0,l_val,r_val;
-	
+
 	switch (sample_oss) {
 	case 0x0:
-		printk("### hello world\n");
 		break;
 	case 0x1:
 		left_sam = (signed int)l_sample;
