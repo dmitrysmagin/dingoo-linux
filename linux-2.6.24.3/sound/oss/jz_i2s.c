@@ -849,31 +849,12 @@ static void replay_fill_2x16_s(signed long src_start, int count, int id)
 	*(out_dma_buf_data_count + id) = cnt;
 }
 
-static void replay_fill_2x18_s(unsigned long src_start, int count, int id)
-{
-	int cnt = 0;
-	signed long d1;
-	signed long l1;
-	volatile signed long *s = (signed long *)src_start;
-	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
-	while (count > 0) {
-		count -= 4;
-		cnt += 4;
-		d1 = *(s++);
-		l1 = (signed long)d1;
-		*(dp ++) = l1;
-	}
-   
-	cnt *= jz_audio_b;
-	*(out_dma_buf_data_count + id) = cnt;
-}
-
 static unsigned int jz_audio_set_format(int dev, unsigned int fmt)
 {
 	switch (fmt) {
 	case AFMT_U8:
-		__i2s_set_oss_sample_size(8);
-		__i2s_set_iss_sample_size(8);
+		__i2s_set_oss_sample_size(16);
+		__i2s_set_iss_sample_size(16);
 		jz_audio_format = fmt;
 		jz_update_filler(jz_audio_format,jz_audio_channels);
 		break;	
@@ -887,11 +868,6 @@ static unsigned int jz_audio_set_format(int dev, unsigned int fmt)
 		jz_update_filler(jz_audio_format,jz_audio_channels);
 		__i2s_set_oss_sample_size(16);
 		__i2s_set_iss_sample_size(16);
-		break;
-	case 18:
-		__i2s_set_oss_sample_size(18);
-		jz_audio_format = fmt;
-		jz_update_filler(jz_audio_format,jz_audio_channels);
 		break;
 	case AFMT_QUERY:
 		break;
@@ -1223,11 +1199,6 @@ static void jz_update_filler(int format, int channels)
 	case TYPE(AFMT_S16_LE, 2):
 		jz_audio_b = 2;
 		replay_filler = replay_fill_2x16_s;
-		record_filler = record_fill_2x16_s;
-		break;
-	case TYPE(18, 2):
-		jz_audio_b = 1;
-		replay_filler = replay_fill_2x18_s;
 		record_filler = record_fill_2x16_s;
 		break;
 	default:
