@@ -830,8 +830,6 @@ static void replay_fill_2x8_u(signed long src_start, int count, int id)
 	}
 	*(out_dma_buf_data_count + id) = cnt * jz_audio_b;
 
-	printk("### replay_fill_2x8_u %d %d\n", count, id);
-
 	if(cnt > 0)  {
 		save_last_samples[id].left = dd1;
 		save_last_samples[id].right = dd2;
@@ -926,8 +924,6 @@ static void replay_fill_2x16_s(signed long src_start, int count, int id)
 	signed long dd1, dd2;
 	volatile signed short *s = (signed short *)src_start;
 	volatile signed long *dp = (signed long*)(*(out_dma_buf + id));
-
-	printk("### replay_fill_2x16_s %d %d\n", count, id);
 
 	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
 		dd1 = (signed long)(*s++) >> codec_volue_shift;
@@ -2772,7 +2768,7 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 	
 	__i2s_enable_transmit_dma();
 	__i2s_enable_replay();
-	
+
 	spin_lock_irqsave(&controller->ioctllock, flags);
 	controller->nextOut = 0;
 	spin_unlock_irqrestore(&controller->ioctllock, flags);
@@ -2786,8 +2782,6 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 		return ret ? ret : -EFAULT;
 	}
 
-	printk("### copy from user %u bytes\n", count);
-
 	while (left_count > 0) {
 	audio_write_back:
 		if (file->f_flags & O_NONBLOCK)
@@ -2798,7 +2792,6 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 			else
 				sleep_on(&tx_wait_queue);
 		}
-		printk("### here we are... copy_count %d\n", copy_count);
 		/* the end fragment size in this write */
 		if (ret + copy_count > count)
 			copy_count = count - ret;
