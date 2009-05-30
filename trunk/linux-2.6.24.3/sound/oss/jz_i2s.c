@@ -1228,7 +1228,7 @@ static void jz_update_filler(int format, int channels)
 	case TYPE(18, 2):
 		jz_audio_b = 1;
 		replay_filler = replay_fill_2x18_s;
-		record_filler = record_fill_2x16_s;
+		record_filler = record_fill_2x18_s;
 		break;
 	default:
 		;
