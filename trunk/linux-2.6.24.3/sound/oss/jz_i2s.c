@@ -643,9 +643,8 @@ static int record_fill_1x8_u(unsigned long dst_start, int count, int id)
 	volatile unsigned char *dp = (unsigned char*)dst_start;
 
 	for (cnt = 0; count > 0; count -= 2, cnt++) {
-		d1 = *(s++);
+		d1 = *(s++); s++;	/* skip the other channel */
 		*(dp++) = (d1 >> 8) + 0x80;
-		s++;	/* skip the other channel */
 	}
 
 	return cnt;
@@ -659,9 +658,8 @@ static int record_fill_1x8_s(unsigned long dst_start, int count, int id)
 	volatile unsigned char *dp = (unsigned char*)dst_start;
 
 	for (cnt = 0; count > 0; count -= 2, cnt++) {
-		d1 = *(s++);
+		d1 = *(s++); s++;	/* skip the other channel */
 		*(dp++) = d1 >> 8;
-		s++;	/* skip the other channel */
 	}
 
 	return cnt;
@@ -709,9 +707,8 @@ static int record_fill_1x16_u(unsigned long dst_start, int count, int id)
 	unsigned short *dp = (unsigned short *)dst_start;
 	
 	for (cnt = 0; count > 0; count -= 2, cnt += 2) { 
-		d1 = *(s++);
+		d1 = *(s++); s++;	/* skip the other channel */
 		*(dp++) = d1 + 0x8000;
-		s++;	/* skip the other channel */
 	}
 
 	return cnt;
@@ -725,9 +722,8 @@ static int record_fill_1x16_s(unsigned long dst_start, int count, int id)
 	unsigned short *dp = (unsigned short *)dst_start;
 
 	for (cnt = 0; count > 0; count -= 2, cnt += 2) {
-		d1 = *(s++);
+		d1 = *(s++); s++;	/* skip the other channel */
 		*(dp++) = d1;
-		s++;	   /* skip the other channel */
 	}
 
 	return cnt;
@@ -745,7 +741,7 @@ static int record_fill_2x16_u(unsigned long dst_start, int count, int id)
 		d2 = *(s++);
 		if(abnormal_data_count > 0) { 
 			d1 = d2 = 0;
-			abnormal_data_count --;
+			abnormal_data_count--;
 		}
 		*(dp++) = d1 + 0x8000;
         	*(dp++) = d2 + 0x8000;
@@ -766,7 +762,7 @@ static int record_fill_2x16_s(unsigned long dst_start, int count, int id)
 		d2 = *(s++);
 		if(abnormal_data_count > 0) { 
 			d1 = d2 = 0;
-			abnormal_data_count --;
+			abnormal_data_count--;
 		}
 		*(dp++) = d1;
         	*(dp++) = d2;
@@ -945,8 +941,8 @@ static unsigned int jz_audio_set_format(int dev, unsigned int fmt)
 	switch (fmt) {
 	case AFMT_U8:
 	case AFMT_S8:
-		__i2s_set_oss_sample_size(8);
-		__i2s_set_iss_sample_size(8);
+		__i2s_set_oss_sample_size(16);
+		__i2s_set_iss_sample_size(16);
 		jz_audio_format = fmt;
 		jz_update_filler(jz_audio_format,jz_audio_channels);
 		break;	
@@ -2781,6 +2777,8 @@ static ssize_t jz_audio_write(struct file *file, const char *buffer, size_t coun
 		printk("copy_from_user failed:%d",ret);
 		return ret ? ret : -EFAULT;
 	}
+
+	printk("### count %d ch %d copy_count %d fragsize %d jz_audio_b %d\n", count, jz_audio_channels, copy_count, jz_audio_fragsize, jz_audio_b);
 
 	while (left_count > 0) {
 	audio_write_back:
