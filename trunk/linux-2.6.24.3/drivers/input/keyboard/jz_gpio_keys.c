@@ -42,18 +42,18 @@ struct {
 } jz_kbd_button [] = {
 
 #ifdef CONFIG_JZ4740_A320
-	{ .gpio = 102,	.active_low = 1,	.keycode = KEY_UP },
-	{ .gpio = 123,	.active_low = 1,	.keycode = KEY_DOWN },
-	{ .gpio = 101,	.active_low = 1,	.keycode = KEY_LEFT },
-	{ .gpio = 114,	.active_low = 1,	.keycode = KEY_RIGHT },
-	{ .gpio = 96,	.active_low = 1,	.keycode = KEY_D },
-	{ .gpio = 97,	.active_low = 1,	.keycode = KEY_C },
-	{ .gpio = 115,	.active_low = 1,	.keycode = KEY_S },
-	{ .gpio = 98,	.active_low = 1,	.keycode = KEY_X },
-	{ .gpio = 110,	.active_low = 1,	.keycode = KEY_A },
-	{ .gpio = 111,	.active_low = 1,	.keycode = KEY_Z },
-	{ .gpio = 81,	.active_low = 1,	.keycode = KEY_ENTER },
-	{ .gpio = 113,	.active_low = 1,	.keycode = KEY_SPACE },
+	{ .gpio = 102,	.active_low = 1,	.keycode = KEY_UP },		/* D-pad up */
+	{ .gpio = 123,	.active_low = 1,	.keycode = KEY_DOWN },		/* D-pad down */
+	{ .gpio = 101,	.active_low = 1,	.keycode = KEY_LEFT },		/* D-pad left */
+	{ .gpio = 114,	.active_low = 1,	.keycode = KEY_RIGHT },		/* D-pad right */
+	{ .gpio = 96,	.active_low = 1,	.keycode = KEY_LEFTCTRL },	/* A button */
+	{ .gpio = 97,	.active_low = 1,	.keycode = KEY_LEFTALT },	/* B button */
+	{ .gpio = 115,	.active_low = 1,	.keycode = KEY_SPACE },		/* X button */
+	{ .gpio = 98,	.active_low = 1,	.keycode = KEY_LEFTSHIFT },	/* Y button */
+	{ .gpio = 110,	.active_low = 1,	.keycode = KEY_TAB },		/* Left shoulder button */
+	{ .gpio = 111,	.active_low = 1,	.keycode = KEY_BACKSPACE },	/* Right shoulder button */
+	{ .gpio = 81,	.active_low = 1,	.keycode = KEY_ENTER },		/* START button */
+	{ .gpio = 113,	.active_low = 1,	.keycode = KEY_ESC },		/* SELECT button */
 #endif /* CONFIG_JZ4740_A320 */
 
 #ifdef CONFIG_JZ4740_PAVO
