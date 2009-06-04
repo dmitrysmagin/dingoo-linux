@@ -1,5 +1,5 @@
-#ifndef _CONFIGS_H
-#define _CONFIGS_H
+#ifndef _CONFIG_H
+#define _CONFIG_H
 
 /*
  * Failsafe SDRAM configuration values
@@ -21,18 +21,18 @@
 #define SDRAM_TRWL		7	/* Write Latency Time (ns) */
 #define SDRAM_TREF	        15625	/* Refresh period (ns): 4096 refresh cycles/64ms */
 
-extern volatile u32 CPU_ID;
-extern volatile u8 SDRAM_BW16;
-extern volatile u8 SDRAM_BANK4;
-extern volatile u8 SDRAM_ROW;
-extern volatile u8 SDRAM_COL;
-extern volatile u8 CONFIG_MOBILE_SDRAM;
-extern volatile u32 CFG_CPU_SPEED;
-extern volatile u8 PHM_DIV;
-extern volatile u32 CFG_EXTAL;
-extern volatile u32 CONFIG_BAUDRATE;
-extern volatile u32 UART_BASE;
-extern volatile u8 CONFIG_MOBILE_SDRAM;
-extern volatile u8 IS_SHARE;
+#define CPU_ID			0x4740
+#define CFG_EXTAL		12000000
+#define CFG_CPU_SPEED		336000000
+#define PHM_DIV			4
+#define UART_BASE		UART0_BASE
+#define CONFIG_BAUDRATE		57600
+#define SDRAM_BW16		0
+#define SDRAM_BANK4		1
+#define SDRAM_ROW		12
+#define SDRAM_COL		9
+#define CONFIG_MOBILE_SDRAM	0
+#define IS_SHARE		1
 
-#endif 
+#endif
+

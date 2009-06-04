@@ -8,7 +8,7 @@
  */
 
 #include "jz4740.h"
-#include "configs.h"
+#include "config.h"
 
 #include "board.h"
 
