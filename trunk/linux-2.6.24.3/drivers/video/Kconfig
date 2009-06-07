@@ -223,10 +223,15 @@ choice
 	prompt "SLCD Panel"
 	default JZ_SLCD_A320
 
-config JZ_SLCD_A320
-	bool "Dingoo A320 Smart LCD panel"
+config JZ_SLCD_A320_ILI9325
+	bool "Dingoo A320 ILI9325 smart LCD panel"
 	---help---
-	Driver for Dingoo A320 IL9325 Smart LCD panel.
+	Driver for ILI9325 smart LCD panel as connected in Dingoo A320 (older model).
+
+config JZ_SLCD_A320_ILI9331
+	bool "Dingoo A320 ILI9331 smart LCD panel"
+	---help---
+	Driver for ILI9331 smart LCD panel as connected in Dingoo A320 (newer model).
 
 config JZ_SLCD_LGDP4551
 	bool "LG LGDP4551 Smart LCD panel"

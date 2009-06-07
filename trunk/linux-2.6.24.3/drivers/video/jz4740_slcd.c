@@ -91,7 +91,7 @@ struct jzfb_info {
 };
 
 static struct jzfb_info jzfb = {
-#ifdef CONFIG_JZ_SLCD_A320
+#if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331)
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
 	320, 240, 16, 16, 16000000	/*16 bpp, 16 bus */
 #endif

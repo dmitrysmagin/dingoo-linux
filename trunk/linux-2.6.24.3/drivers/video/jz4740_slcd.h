@@ -31,13 +31,16 @@
 #define FBIO_DO_REFRESH		0x468f
 #define FBIO_SET_REG		0x4690
 
+
+
 /*
- * Dingoo A320 IL9325 specific stuff
- * Reverse engineered from A320_PD27_ILI9325_RLS.dl
- * Only 16 bit bus supported
+ * Dingoo A320 IL9325 specific stuff.
+ * Reverse engineered from A320_PD27_ILI9325_RLS.DL
+ * found in the first released unbricking tool.
+ * Only 16 bit bus supported.
  */
 
-#ifdef CONFIG_JZ_SLCD_A320
+#ifdef CONFIG_JZ_SLCD_A320_ILI9325
 #define PIN_RS_N	(32*2+19)	/* Port 2 pin 19: RS# (register select, active low) */
 #define PIN_CS_N	(32*1+17)	/* Port 1 pin 17: CS# (chip select, active low) */
 #define PIN_RESET_N	(32*1+18)	/* Port 1 pin 18: RESET# (reset, active low) */
@@ -144,7 +147,122 @@ do {					\
 	__gpio_set_pin(PIN_RS_N);	\
 } while(0)
 
-#endif /* CONFIG_JZ_SLCD_A320 */
+#endif /* CONFIG_JZ_SLCD_A320_ILI9325 */
+
+
+
+/*
+ * Dingoo A320 IL9331 specific stuff.
+ * Reverse engineered from CCPMP_CFG_A320_LCM_FAIR_ILI9331_320_240.DL
+ * found in the second released unbricking tool.
+ * Only 16 bit bus supported.
+ */
+
+#ifdef CONFIG_JZ_SLCD_A320_ILI9331
+#define PIN_RS_N	(32*2+19)	/* Port 2 pin 19: RS# (register select, active low) */
+#define PIN_CS_N	(32*1+17)	/* Port 1 pin 17: CS# (chip select, active low) */
+#define PIN_RESET_N	(32*1+18)	/* Port 1 pin 18: RESET# (reset, active low) */
+
+#define	__slcd_special_pin_init()	\
+do {					\
+	__gpio_as_output(PIN_RS_N);	\
+	__gpio_set_pin(PIN_RS_N);	\
+	__gpio_as_output(PIN_CS_N);	\
+	__gpio_set_pin(PIN_CS_N);	\
+	__gpio_as_output(PIN_RESET_N);	\
+	__gpio_clear_pin(PIN_RESET_N);	\
+} while(0)
+
+#define __slcd_special_on() 		\
+do {					\
+	/* RESET pulse */		\
+	__gpio_clear_pin(PIN_RESET_N);	\
+	mdelay(10);			\
+	__gpio_set_pin(PIN_RESET_N);	\
+	mdelay(50);			\
+					\
+	/* Enable chip select */	\
+	__gpio_clear_pin(PIN_CS_N);	\
+					\
+	/* Black magic */		\
+	Mcupanel_RegSet(0xE7, 0x1014);	\
+	Mcupanel_RegSet(0x01, 0x0000);	\
+	Mcupanel_RegSet(0x02, 0x0200);	\
+	Mcupanel_RegSet(0x03, 0x1048);	\
+	Mcupanel_RegSet(0x08, 0x0202);	\
+	Mcupanel_RegSet(0x09, 0x0000);	\
+	Mcupanel_RegSet(0x0A, 0x0000);	\
+	Mcupanel_RegSet(0x0C, 0x0000);	\
+	Mcupanel_RegSet(0x0D, 0x0000);	\
+	Mcupanel_RegSet(0x0F, 0x0000);	\
+	Mcupanel_RegSet(0x10, 0x0000);	\
+	Mcupanel_RegSet(0x11, 0x0007);	\
+	Mcupanel_RegSet(0x12, 0x0000);	\
+	Mcupanel_RegSet(0x13, 0x0000);	\
+	mdelay(100);			\
+	Mcupanel_RegSet(0x10, 0x1690);	\
+	Mcupanel_RegSet(0x11, 0x0224);	\
+	mdelay(50);			\
+	Mcupanel_RegSet(0x12, 0x001F);	\
+	mdelay(50);			\
+	Mcupanel_RegSet(0x13, 0x0500);	\
+	Mcupanel_RegSet(0x29, 0x000C);	\
+	Mcupanel_RegSet(0x2B, 0x000D);	\
+	mdelay(50);			\
+	Mcupanel_RegSet(0x30, 0x0000);	\
+	Mcupanel_RegSet(0x31, 0x0106);	\
+	Mcupanel_RegSet(0x32, 0x0000);	\
+	Mcupanel_RegSet(0x35, 0x0204);	\
+	Mcupanel_RegSet(0x36, 0x160A);	\
+	Mcupanel_RegSet(0x37, 0x0707);	\
+	Mcupanel_RegSet(0x38, 0x0106);	\
+	Mcupanel_RegSet(0x39, 0x0706);	\
+	Mcupanel_RegSet(0x3C, 0x0402);	\
+	Mcupanel_RegSet(0x3D, 0x0C0F);	\
+	Mcupanel_RegSet(0x50, 0x0000);	\
+	Mcupanel_RegSet(0x51, 0x00EF);	\
+	Mcupanel_RegSet(0x52, 0x0000);	\
+	Mcupanel_RegSet(0x53, 0x013F);	\
+	Mcupanel_RegSet(0x20, 0x0000);	\
+	Mcupanel_RegSet(0x21, 0x0000);	\
+	Mcupanel_RegSet(0x60, 0x2700);	\
+	Mcupanel_RegSet(0x61, 0x0001);	\
+	Mcupanel_RegSet(0x6A, 0x0000);	\
+	Mcupanel_RegSet(0x80, 0x0000);	\
+	Mcupanel_RegSet(0x81, 0x0000);	\
+	Mcupanel_RegSet(0x82, 0x0000);	\
+	Mcupanel_RegSet(0x83, 0x0000);	\
+	Mcupanel_RegSet(0x84, 0x0000);	\
+	Mcupanel_RegSet(0x85, 0x0000);	\
+	Mcupanel_RegSet(0x20, 0x00EF);	\
+	Mcupanel_RegSet(0x21, 0x0190);	\
+	Mcupanel_RegSet(0x90, 0x0010);	\
+	Mcupanel_RegSet(0x92, 0x0600);	\
+	Mcupanel_RegSet(0x07, 0x0133);	\
+	Mcupanel_Command(0x22);		\
+} while (0)
+
+/* TODO(IGP): make sure LCD power consumption is low in these conditions */
+
+#define __slcd_special_off()		\
+do {					\
+	/* Keep chip select disabled */	\
+	__gpio_set_pin(PIN_CS_N);	\
+	/* Keep RESET active */		\
+	__gpio_clear_pin(PIN_RESET_N);	\
+} while (0)
+
+#define __slcd_special_rs_enable()	\
+do {					\
+	__gpio_clear_pin(PIN_RS_N);	\
+} while (0)
+
+#define __slcd_special_rs_disable()	\
+do {					\
+	__gpio_set_pin(PIN_RS_N);	\
+} while(0)
+
+#endif /* CONFIG_JZ_SLCD_A320_ILI9331 */
 
 
 
