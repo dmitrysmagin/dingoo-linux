@@ -15,14 +15,7 @@
 void gpio_init(void)
 {
 	__gpio_as_nand();
-	/*
-	 * Initialize SDRAM pins
-	 */
 	__gpio_as_sdram_32bit();
-
-	/*
-	 * Initialize UART0 pins
-	 */
 	__gpio_as_uart0();
 }
 
