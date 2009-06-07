@@ -9,7 +9,7 @@ CROSS	:= mipsel-linux-
 CFLAGS	:= -Wall -O2 -mips32 -fno-pic -mno-abicalls
 LDFLAGS	:= -nostdlib -EL -T target.ld 
 
-OBJS	= head.o main.o board.o serial.o delay.o
+OBJS	= head.o main.o board.o serial.o delay.o nand.o
 
 all: hwinit.bin
 

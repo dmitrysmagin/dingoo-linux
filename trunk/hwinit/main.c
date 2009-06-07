@@ -13,13 +13,20 @@
 #include "board.h"
 #include "serial.h"
 #include "delay.h"
+#include "nand.h"
 
 void c_main(void)
 {
+	int bsel;
+
 	gpio_init();
 	pll_init();
 	serial_init();
 	sdram_init();
+
+	bsel = __gpio_get_pin(BOOT_SELECT_PIN);	
+
+	delay(10);
 
 	serial_puts("A320 hwinit by Ignacio Garcia Perez <iggarpe@gmail.com>\n");
 }

@@ -13,7 +13,6 @@
  *   
  */
 
-#define CONFIG_NR_DRAM_BANKS	1  /* SDRAM BANK Number: 1, 2*/
 #define SDRAM_CASL		2	/* CAS latency: 2 or 3 */
 #define SDRAM_TRAS		45	/* RAS# Active Time (ns) */
 #define SDRAM_RCD		20	/* RAS# to CAS# Delay (ns) */
@@ -33,6 +32,8 @@
 #define SDRAM_COL		9
 #define CONFIG_MOBILE_SDRAM	0
 #define IS_SHARE		1
+
+#define BOOT_SELECT_PIN		113	/* SELECT button */
 
 #endif
 
