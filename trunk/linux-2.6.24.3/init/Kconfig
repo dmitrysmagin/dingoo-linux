@@ -550,7 +550,7 @@ config FUTEX
 	  run glibc-based applications correctly.
 
 config RESERVE_IPU_MEM
-	bool "Reserve memory for IPU on Ingenic JZ4740 SOC"
+	bool "Reserve memory for IPU on Ingenic JZ4740 SOC" if EMBEDDED && SOC_JZ4740
 	default y
 	help
 	  Disabling this option will prevent the kernel from reserving 4MB
