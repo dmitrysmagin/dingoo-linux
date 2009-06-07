@@ -36,13 +36,6 @@
 //#define DEBUG 1
 #undef DEBUG
 
-/* Define this to reserve total 4MB contineous physical memory for IPU.
- * MPlayer will use IPU to optimize the decoding process.
- *
- * If you do not want to run the MPlayer, you can comment it.
- */
-#define CONFIG_RESERVE_IPU_MEM 1
-
 struct proc_dir_entry *proc_jz_root;
 
 /*

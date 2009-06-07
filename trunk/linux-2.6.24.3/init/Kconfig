@@ -549,6 +549,14 @@ config FUTEX
 	  support for "fast userspace mutexes".  The resulting kernel may not
 	  run glibc-based applications correctly.
 
+config RESERVE_IPU_MEM
+	bool "Reserve memory for IPU on Ingenic JZ4740 SOC"
+	default y
+	help
+	  Disabling this option will prevent the kernel from reserving 4MB
+	  of memory at startup for the Image Processing Unit found in Ingenic
+	  JZ4740 system-on-chip processor.
+
 config ANON_INODES
 	bool
 
