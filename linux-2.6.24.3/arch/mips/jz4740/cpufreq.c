@@ -23,8 +23,6 @@
 #define dprintk(msg...) cpufreq_debug_printk(CPUFREQ_DEBUG_DRIVER, \
 						"cpufreq-jz4740", msg)
 
-#undef CHANGE_PLL
-
 #define PLL_UNCHANGED 0
 #define PLL_GOES_UP   1
 #define PLL_GOES_DOWN 2
@@ -516,10 +514,17 @@ static int jz4740_freq_target(struct cpufreq_policy *policy,
 {
 	unsigned int new_index = 0;
 
+	printk("### cpufreq target %u relation %u\n", target_freq, relation);
+
 	if (cpufreq_frequency_table_target(policy,
 					   &jz4740_freq_table.table[0],
 					   target_freq, relation, &new_index))
+	{
+		printk("### cpufreq wrong target\n");
 		return -EINVAL;
+	}
+
+	printk("### cpufreq new_index %u\n", new_index);
 
 	jz4740_set_cpu_divider_index(policy->cpu, new_index);
 

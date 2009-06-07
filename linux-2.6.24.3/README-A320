@@ -1,0 +1,41 @@
+
+               Linux for the Dingoo A320
+
+	Ignacio Garcia Perez <iggarpe@gmail.com>
+
+                (updated 2009-06-07)
+
+
+
+Some notes on this release:
+
+- make a320_defconfig for a default configuration (LCD driver ILI9325).
+
+- If your A320 is one of the newer models, you must change the LCD driver
+  to ILI9331:
+
+    Device drivers
+    |---Graphics support
+        |---Support for framebuffer devices
+            |---SLCD panel
+
+- Sound driver is still OSS. It's quite buggy, but stick to S16 sample
+  format and everything should be ok.
+
+- IPU (Image Processing Unit) memory reservation at startup is disabled
+  (saves 4MB). If you intend to test video playing, you might want to
+  enable it:
+
+    General setup
+    |---Configure standard kernel features (for small sytems)
+        |---Reserve memory for IPU on Ingenic JZ4740 SOC
+
+- CPU frequency scaling is now default enabled. Have a look at the stuff
+  in /sys/devices/system/cpu/cpu0/cpufreq/. Default governor is "userspace".
+  It is untested, and anyway at the moment you can only REDUCE the CPU
+  frequency below the 336MHz set by the boot hardware initialization code
+  (in hwinit if you're booting vía USB boot).
+
+- Lots of JZ4740 hardware support is disabled. Not because it doesn't
+  work but because it is untested. Enable it at your own risk.
+
