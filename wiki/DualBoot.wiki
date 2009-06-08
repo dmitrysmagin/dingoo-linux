@@ -157,7 +157,7 @@ Once it is clear how the SPL works, we have several choices (remember that we ar
 
 == Replace the SPL ==
 
-This is in my opinion the best option, since we are altering a single eraseblock. The drawback is that we are not using the original firmware SPL and thus we must make sure we perform the same actions whatever they are.
+This is in my opinion the best option, since we are altering a single eraseblock. The drawback is that we are not using the original firmware SPL and thus we must make sure we perform the same actions it does whatever they are.
 
   * Place the u-boot SPL and u-boot itself in the first eraseblock (0x00000000-0x0003FFFF).
   * Modify u-boot to use different boot options depending on SELECT key status:
