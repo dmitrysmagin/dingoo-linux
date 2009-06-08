@@ -174,4 +174,4 @@ The main advantage would be that me don't need to make sure to do all the initia
 
 Move the system loader code somewhere else and place u-boot there, keeping the system loader layout and format.
 
-This is in principle a no-brainer, but has a big problem: the u-boot code gets loaded in memory where the system loader should be, and then if normal boot is selected, the u-boot code must load and overwrite itself. Well, actually it should be something like "move myself somewhere else and load system loader where I was".
+This is in principle a no-brainer, but has a big problem: the u-boot code gets loaded in memory where the original system loader should be, and then if normal boot is selected, the u-boot code must load the original system loader and overwrite itself. Well, actually it should be something like "move myself somewhere else and load system loader where I was".
