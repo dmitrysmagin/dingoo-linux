@@ -124,9 +124,54 @@ Conclusions:
 
 Obviously the SPL in pages 0-3 loads the OS in pages 128-511. We should tap into the boot process as soon as possible to avoid the problems I faced when using the ccpmp.bin patch approach, so this is what I intend to do: patch the SPL code to check for select key. If pressed, load OS from pages 4-127 instead of 128-511. And place customized code (u-boot probably) in pages 4-127, using only the first 2KB of each pages because that's what the SPL will load. That means custom code can be at most 248KB long.
 
-Tasks to do:
+= Disassemblying the SPL code (pages 0-3) =
 
-  * Read the first 2KB from pages 0-3, join it all and disassemble it.
-  * Understand how the SPL code loads the OS from pages 128-511, in particular how it interprets the OOB data (which it reads not from the OOB area but from the second half of the pages).
-  * Patch the SPL code to load from pages 4-127 if select button is pressed.
-  * Place custom code in pages 4-127 (using only first 2KB of each page for code and placing correct OOB data in first bytes of second 2KB).
+This is what the SPL code does:
+
+  * Disable LCD backlight (port 3 bit 31 = 0).
+  * Initialize PLL and SDRAM.
+  * Load from NAND offset 0x00400000 to DRAM at address 0x80E00000.
+  * Check that DWORD at 0x80E10004 is in the 0x00000000-0x01FFFFFF range.
+  * *Jump to address 0x80E10008*.
+
+These are the contens of flash, *read using 2KB page size*
+
+|| 0x00000000-0x00001FFF || Secondary Program Loader (SPL) ||
+|| 0x00040000-0x00091670 || System loader ||
+
+The system loader is read by the SPL into DRAM at address 0x80E00000. The size of the system loader is found in the first DWORD. The format of the system loader is as follows:
+
+|| 0x00040000 (DWORD) || Size of system loader (=0x00051670) ||
+|| 0x00040004 (DWORD) || UNKNOWN (=0x000905D7) ||
+|| 0x00040008 (DWORD) || Size of hardware initialization .DL (=0x00002A40) ||
+|| 0x0004000C, size in (0x00040008) || Hardware initialization .DL (as found in the unbricking tool) ||
+|| 0x00050000 (DWORD) || UNKNOWN (=0x0009614D) ||
+|| 0x00050004 (DWORD) || Size of actual system loader code (=0x00041670) ||
+|| 0x00050008, size in (0x00050004) || Actual system loader code (entry point) ||
+
+The SPL reads the size it must load from DWORD at 0x00040000. Note that the system loader execution entry point is at NAND offset 0x00050008: the 0x00040000-0x0004FFFF area is reserved to store the hardware initialization .DL. This is just like a initramfs in linux: it is loaded by the bootloader and left there to be used by the system loader code.
+
+= How to tap into the boot process? =
+
+Once it is clear how the SPL works, we have several choices (remember that we are treating the NAND as if it was 2KB page size, though it is actually 4KB, because the ROM IPL code thinks it is 2KB):
+
+== Replace the SPL ==
+
+This is in my opinion the best option, since we are altering a single eraseblock. The drawback is that we are not using the original firmware SPL and thus we must make sure we perform the same actions whatever they are.
+
+  * Place the u-boot SPL and u-boot itself in the first eraseblock (0x00000000-0x0003FFFF).
+  * Modify u-boot to use different boot options depending on SELECT key status:
+    * To boot the original firmware, load from NAND offset 0x00040000 into 0x80E00000 and jump to 0x80E10008. U-boot doesn't actually need to read the load size from DWORD at 0x00040000, just load a large enough chunk (for example 0x00080000 = two eraseblocks > 0x0051670, which is the actual size to load).
+    * To boot linux, use whatever options are needed (mmcinit, fatload, etc).
+
+== Patch the SPL ==
+
+Patch the SPL code and (if SELECT key pressed) trick it into loading u-boot instead of the system loader. This is feasible because the code modification is minimal (we just change the load offset). The downside is that we must store the u-boot code in the same format than the system loader, making the u-boot code larger at least by 0x00010008 bytes (~64KB). Current u-boot code + 64KB doesn't fit in a single eraseblock, so this option is discarded.
+
+The main advantage would be that me don't need to make sure to do all the initialization the SPL does because we are actually executing the SPL code.
+
+== Replace the system loader ==
+
+Move the system loader code somewhere else and place u-boot there, keeping the system loader layout and format.
+
+This is in principle a no-brainer, but has a big problem: the u-boot code gets loaded in memory where the system loader should be, and then if normal boot is selected, the u-boot code must load and overwrite itself. Well, actually it should be something like "move myself somewhere else and load system loader where I was".
