@@ -151,6 +151,8 @@ The system loader is read by the SPL into DRAM at address 0x80E00000. The size o
 
 The SPL reads the size it must load from DWORD at 0x00040000. Note that the system loader execution entry point is at NAND offset 0x00050008: the 0x00040000-0x0004FFFF area is reserved to store the hardware initialization .DL. This is just like a initramfs in linux: it is loaded by the bootloader and left there to be used by the system loader code.
 
+*IMPORTANT: looks like the ECC position in OOB for the NAND area where the system loader is stored is NON STANDARD.*
+
 = How to tap into the boot process? =
 
 Once it is clear how the SPL works, we have several choices (remember that we are treating the NAND as if it was 2KB page size, though it is actually 4KB, because the ROM IPL code thinks it is 2KB):
@@ -164,14 +166,21 @@ This is in my opinion the best option, since we are altering a single eraseblock
     * To boot the original firmware, load from NAND offset 0x00040000 into 0x80E00000 and jump to 0x80E10008. U-boot doesn't actually need to read the load size from DWORD at 0x00040000, just load a large enough chunk (for example 0x00080000 = two eraseblocks > 0x0051670, which is the actual size of the system loader).
     * To boot linux, use whatever options are needed (mmcinit, fatload, etc).
 
+*Note that here we MUST implement support for the nonstandard was of storing ECC information in the OOB where the system loader is stored.*
+
 == Patch the SPL ==
 
 Patch the SPL code and (if SELECT key pressed) trick it into loading u-boot instead of the system loader. This is feasible because the code modification is minimal (we just change the load offset). The downside is that we must store the u-boot code in the same format than the system loader, making the u-boot code larger at least by 0x00010008 bytes (~64KB). Current u-boot code + 64KB doesn't fit in a single eraseblock, so this option is discarded.
 
 The main advantage would be that me don't need to make sure to do all the initialization the SPL does because we are actually executing the SPL code.
 
+*Note that we would need a tool able to generate ECC in the nonstatdard format used for the system loader storage area.*
+
 == Replace the system loader ==
 
 Move the system loader code somewhere else and place u-boot there, keeping the system loader layout and format.
 
 This is in principle a no-brainer, but has a big problem: the u-boot code gets loaded in memory where the original system loader should be, and then if normal boot is selected, the u-boot code must load the original system loader and overwrite itself. Well, actually it should be something like "move myself somewhere else and load system loader where I was".
+
+
+*Note that we would need a tool able to generate ECC in the nonstatdard format used for the system loader storage area.*
