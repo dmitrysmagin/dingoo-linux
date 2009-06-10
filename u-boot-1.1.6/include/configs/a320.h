@@ -63,33 +63,35 @@
 #define CONFIG_FAT      	1    
 #define CONFIG_DOS_PARTITION	1
 
-/* allow to overwrite serial and ethaddr */
-#define CONFIG_ENV_OVERWRITE
+#define CFG_NO_FLASH		1
 
-#define CONFIG_COMMANDS		((CONFIG_CMD_DFL & ~CFG_CMD_NET) | \
-				CFG_CMD_ASKENV	| \
-                                CFG_CMD_NAND	| \
-				CFG_CMD_MMC	| \
-				CFG_CMD_FAT	)
-
-#define CONFIG_BOOTP_MASK	( CONFIG_BOOTP_DEFAULT )
+#define CONFIG_COMMANDS		( \
+				CFG_CMD_IMI		| \
+				CFG_CMD_MEMORY		| \
+				CFG_CMD_CONINFO		| \
+				CFG_CMD_BOOTD		| \
+				CFG_CMD_ASKENV		| \
+				CFG_CMD_RUN		| \
+				CFG_CMD_ECHO		| \
+				CFG_CMD_REGINFO		| \
+				CFG_CMD_AUTOSCRIPT	| \
+				CFG_CMD_BSP		| \
+				CFG_CMD_MISC		| \
+				CFG_CMD_DIAG		| \
+				CFG_CMD_NAND		| \
+				CFG_CMD_PORTIO		| \
+				CFG_CMD_MMC		| \
+				CFG_CMD_FAT		)
 
 /* this must be included AFTER the definition of CONFIG_COMMANDS (if any) */
 #include <cmd_confdefs.h>
 
-#define CONFIG_BOOTDELAY	3
-#define CONFIG_BOOTFILE	        ""
-#define CONFIG_BOOTARGS		""
-#define CONFIG_BOOTCOMMAND	"mmcinit; fatload mmc 0 0x80600000 zimage; go 0x80600000"
-#define CFG_AUTOLOAD		"y"		/* No autoload */
-
-//#define CONFIG_NET_MULTI
-
-//#define CONFIG_DRIVER_CS8900      1
-//#define CS8900_BASE             (0xa8000000)
-//#define CS8900_BUS16
-
-//#define CONFIG_ETHADDR		00:2a:cc:2a:af:fe    /* Ethernet address */
+#define CONFIG_ZERO_BOOTDELAY_CHECK	1	/* Allow stopping autoload even if bootdelay is zero */
+#define CONFIG_BOOTDELAY		0
+#define CONFIG_BOOTCOMMAND		"mmcinit; fatload mmc 0 0x80600000 zimage; go 0x80600000"
+#define CONFIG_BOOTFILE	        	""
+#define CONFIG_BOOTARGS			""
+#define CFG_AUTOLOAD			"y"
 
 /*
  * Serial download configuration
@@ -117,26 +119,18 @@
 #define	CFG_LOAD_ADDR		0x80600000     /* default load address	*/
 
 #define CFG_MEMTEST_START	0x80100000
-#define CFG_MEMTEST_END		0x80800000
+#define CFG_MEMTEST_END		0x82000000
 
-#define CFG_RX_ETH_BUFFER	16	/* use 16 rx buffers on jz47xx eth */
-
-/*-----------------------------------------------------------------------
- * Environment
- *----------------------------------------------------------------------*/
-#if !defined(CONFIG_NAND_U_BOOT) && !defined(CONFIG_NAND_SPL)
-#define CFG_ENV_IS_IN_FLASH     1	/* use FLASH for environment vars	*/
-#else
-#define CFG_ENV_IS_IN_NAND	1	/* use NAND for environment vars	*/
-#endif
+#define CFG_ENV_IS_NOWHERE	1
+#define CFG_ENV_SIZE		0x10000
 
 /*-----------------------------------------------------------------------
  * NAND FLASH configuration
  */
-#define CFG_NAND_PAGE_SIZE      4096
-#define CFG_NAND_BLOCK_SIZE	(512 << 10)	/* NAND chip block size		*/
+#define CFG_NAND_PAGE_SIZE      2048
+#define CFG_NAND_BLOCK_SIZE	(256 << 10)	/* NAND chip block size		*/
 #define CFG_NAND_BADBLOCK_PAGE	127		/* NAND bad block was marked at this page in a block, starting from 0 */
-#define CFG_NAND_ECC_POS        28              /* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
+#define CFG_NAND_ECC_POS        6		/* Ecc offset position in oob area, its default value is 6 if it isn't defined. */
 
 #define CFG_MAX_NAND_DEVICE     1
 #define NAND_MAX_CHIPS          1
@@ -163,40 +157,13 @@
 
 /*
  * Define the partitioning of the NAND chip (only RAM U-Boot is needed here)
+ *
+ * For the A320 we must treat the NAND as if it was 2K page size, and we want
+ * to use only the first NAND block since as of yet we must get along with the
+ * original firmware.
  */
-#define CFG_NAND_U_BOOT_OFFS	(512 << 10)	/* Offset to RAM U-Boot image	*/
-#define CFG_NAND_U_BOOT_SIZE	(512 << 10)	/* Size of RAM U-Boot image	*/
-
-#ifdef CFG_ENV_IS_IN_NAND
-#define CFG_ENV_SIZE		CFG_NAND_BLOCK_SIZE
-#define CFG_ENV_OFFSET		(CFG_NAND_BLOCK_SIZE + CFG_NAND_U_BOOT_SIZE + CFG_NAND_BLOCK_SIZE)	/* environment starts here  */
-#define CFG_ENV_OFFSET_REDUND	(CFG_ENV_OFFSET + CFG_ENV_SIZE)
-#endif
-
-
-/*-----------------------------------------------------------------------
- * NOR FLASH and environment organization
- */
-#define CFG_MAX_FLASH_BANKS	1	/* max number of memory banks */
-#define CFG_MAX_FLASH_SECT	(128)	/* max number of sectors on one chip */
-
-#define PHYS_FLASH_1		0xa8000000 /* Flash Bank #1 */
-
-/* The following #defines are needed to get flash environment right */
-#define	CFG_MONITOR_BASE	TEXT_BASE   /* in pavo/config.mk TEXT_BASE=0x88000000*/ 
-#define	CFG_MONITOR_LEN		(256*1024)  /* Reserve 256 kB for Monitor */
-
-#define CFG_FLASH_BASE		PHYS_FLASH_1
-
-/* timeout values are in ticks */
-#define CFG_FLASH_ERASE_TOUT	(2 * CFG_HZ) /* Timeout for Flash Erase */
-#define CFG_FLASH_WRITE_TOUT	(2 * CFG_HZ) /* Timeout for Flash Write */
-
-#ifdef CFG_ENV_IS_IN_FLASH
-#define	CFG_ENV_IS_NOWHERE	1
-#define CFG_ENV_ADDR		0xa8040000
-#define CFG_ENV_SIZE		0x20000
-#endif
+#define CFG_NAND_U_BOOT_OFFS	(64  << 10)	/* Offset to RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_SIZE	(192 << 10)	/* Size of RAM U-Boot image	*/
 
 /*-----------------------------------------------------------------------
  * SDRAM Info.
