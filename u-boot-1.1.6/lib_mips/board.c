@@ -364,17 +364,20 @@ void board_init_r (gd_t *id, ulong dest_addr)
 	env_name_spec += gd->reloc_off;
 #endif
 
+	bd = gd->bd;
+
+#ifndef CFG_NO_FLASH
 	/* configure available FLASH banks */
 	size = flash_init();
 	display_flash_config (size);
 
-	bd = gd->bd;
 	bd->bi_flashstart = CFG_FLASH_BASE;
 	bd->bi_flashsize = size;
 #if CFG_MONITOR_BASE == CFG_FLASH_BASE
 	bd->bi_flashoffset = monitor_flash_len;	/* reserved area for U-Boot */
 #else
 	bd->bi_flashoffset = 0;
+#endif
 #endif
 
 	/* initialize malloc() area */
