@@ -72,3 +72,20 @@ int checkboard (void)
 
 	return 0; /* success */
 }
+
+//----------------------------------------------------------------------
+// Miscellaneous platform-dependent initializations
+
+int misc_init_r (void)
+{
+	const char *str;
+
+	/*
+	 * If SELECT key pressed, use alternate boot method
+	 */
+	if (!__gpio_get_pin(GPIO_BOOT_SELECT)) {
+		printf("### bootcmd = %s\n", CONFIG_ALTBOOTCOMMAND);
+		setenv("bootcmd", CONFIG_ALTBOOTCOMMAND);
+	}
+}
+
