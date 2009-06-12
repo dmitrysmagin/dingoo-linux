@@ -79,7 +79,6 @@
 				CFG_CMD_MISC		| \
 				CFG_CMD_DIAG		| \
 				CFG_CMD_NAND		| \
-				CFG_CMD_PORTIO		| \
 				CFG_CMD_MMC		| \
 				CFG_CMD_FAT		)
 
