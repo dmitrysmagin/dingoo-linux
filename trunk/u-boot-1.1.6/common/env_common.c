@@ -72,6 +72,9 @@ uchar default_environment[] = {
 #ifdef	CONFIG_BOOTCOMMAND
 	"bootcmd="	CONFIG_BOOTCOMMAND		"\0"
 #endif
+#ifdef	CONFIG_ALTBOOTCOMMAND
+	"altboot="	CONFIG_ALTBOOTCOMMAND		"\0"
+#endif
 #ifdef	CONFIG_RAMBOOTCOMMAND
 	"ramboot="	CONFIG_RAMBOOTCOMMAND		"\0"
 #endif
