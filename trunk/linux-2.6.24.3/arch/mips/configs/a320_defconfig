@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.24.3
-# Mon Jun  8 01:12:00 2009
+# Mon Jun  8 01:40:00 2009
 #
 CONFIG_MIPS=y
 
@@ -866,7 +866,7 @@ CONFIG_DEBUG_FS=y
 # CONFIG_HEADERS_CHECK is not set
 # CONFIG_DEBUG_KERNEL is not set
 # CONFIG_SAMPLES is not set
-CONFIG_CMDLINE="rootdelay=1 console=tty0 root=/dev/mmcblk0p2 g_serial.use_acm=1"
+CONFIG_CMDLINE="rootdelay=1 console=tty0 root=/dev/mmcblk0p2 cpufreq.debug=1 g_serial.use_acm=1"
 
 #
 # Security options
