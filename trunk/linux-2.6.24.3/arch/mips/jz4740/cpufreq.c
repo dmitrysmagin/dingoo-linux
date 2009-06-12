@@ -514,21 +514,14 @@ static int jz4740_freq_target(struct cpufreq_policy *policy,
 {
 	unsigned int new_index = 0;
 
-	printk("### cpufreq target %u relation %u\n", target_freq, relation);
-
 	if (cpufreq_frequency_table_target(policy,
 					   &jz4740_freq_table.table[0],
 					   target_freq, relation, &new_index))
 	{
-		printk("### cpufreq wrong target\n");
 		return -EINVAL;
 	}
 
-	printk("### cpufreq new_index %u\n", new_index);
-
 	jz4740_set_cpu_divider_index(policy->cpu, new_index);
-
-	dprintk("new frequency is %d KHz (REG_CPM_CPCCR:0x%x)\n", __cpm_get_cclk() / 1000, REG_CPM_CPCCR);
 
 	return 0;
 }
