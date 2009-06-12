@@ -106,7 +106,20 @@ static struct nand_oobinfo nand_oob_16 = {
 	.eccpos = {0, 1, 2, 3, 6, 7},
 	.oobfree = { {8, 8} }
 };
-#if defined(CONFIG_JZ4740)
+#ifdef CONFIG_JZ4740
+#ifdef CONFIG_NAND_CCSYSLDR
+static struct nand_oobinfo nand_oob_64 = {	/* Special ECC layout for ChinaChip system loader */
+	.useecc = MTD_NANDECC_AUTOPLACE,
+	.eccbytes = 36,
+	.eccpos = {
+		4,  5,  6,  7,  8,  9,  10, 11,
+		12, 16, 17, 18, 19, 20, 21, 22,
+		23, 24, 28, 29, 30, 31, 32, 33,
+		34, 35, 36, 40, 41, 42, 43, 44,
+		45, 46, 47, 48},
+	.oobfree = { {52, 12} }
+};
+#else
 static struct nand_oobinfo nand_oob_64 = {
 	.useecc = MTD_NANDECC_AUTOPLACE,
 	.eccbytes = 36,
@@ -118,6 +131,7 @@ static struct nand_oobinfo nand_oob_64 = {
 		38, 39, 40, 41},
 	.oobfree = { {2, 4}, {42, 22} }
 };
+#endif
 static struct nand_oobinfo nand_oob_128 = {
 	.useecc = MTD_NANDECC_AUTOPLACE,
 	.eccbytes = 72,
@@ -2760,6 +2774,12 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 			busw = nand_flash_ids[i].options & NAND_BUSWIDTH_16;
 		}
 
+#ifdef CONFIG_NAND_FORCE
+		mtd->oobblock = CFG_NAND_PAGE_SIZE;
+		mtd->oobsize = CFG_NAND_PAGE_SIZE / 32;
+		mtd->erasesize = CFG_NAND_BLOCK_SIZE;
+#endif
+
 		/* Check, if buswidth is correct. Hardware drivers should set
 		 * this correct ! */
 		if (busw != (this->options & NAND_BUSWIDTH_16)) {
@@ -3057,16 +3077,6 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 #endif
 	mtd->block_isbad = nand_block_isbad;
 	mtd->block_markbad = nand_block_markbad;
-
-        /* adjust autooob.eccpos[] according to CFG_NAND_ECC_POS */
-#if defined(CFG_NAND_ECC_POS)
-	for (i = 0; i < this->autooob->eccbytes; i++) {
-		this->autooob->eccpos[i] = CFG_NAND_ECC_POS + i;
-	}
-	this->autooob->oobfree[0][1] = CFG_NAND_ECC_POS - 2;
-	this->autooob->oobfree[1][0] = CFG_NAND_ECC_POS + this->autooob->eccbytes;
-	this->autooob->oobfree[1][1] = mtd->oobsize - this->autooob->oobfree[1][0];
-#endif
 
 	/* and make the autooob the default one */
 	memcpy(&mtd->oobinfo, this->autooob, sizeof(mtd->oobinfo));
