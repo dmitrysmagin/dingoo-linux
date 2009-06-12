@@ -31,23 +31,6 @@
 #define CONFIG_JZ4740		1  /* Jz4740 SoC */
 #define CONFIG_A320		1  /* Dingoo A320 */
 
-//#define CONFIG_LCD                 /* LCD support */
-//#define CONFIG_SLCD                 /* LCD support */
-
-//#ifndef CONFIG_SLCD                 /* LCD support */
-//#define CONFIG_JZLCD_SAMSUNG_LTP400WQF02_18BIT
-//#endif
-
-//#ifdef CONFIG_SLCD
-//#define CONFIG_JZ_SLCD_SPFD5408A
-//#define SLCD_DMA_CHAN_ID	0  /* DMA Channel for Smart LCD */
-//#endif
-
-//#define LCD_BPP			5  /* 5: 18,24,32 bits per pixel */
-//#define CFG_WHITE_ON_BLACK
-//#define CONFIG_LCD_LOGO
-
-#define JZ4740_NORBOOT_CFG	JZ4740_NORBOOT_16BIT	/* NOR Boot config code */
 #define JZ4740_NANDBOOT_CFG	JZ4740_NANDBOOT_B8R3	/* NAND Boot config code */
 
 #define CFG_CPU_SPEED		336000000	/* CPU clock: 336 MHz */
@@ -62,6 +45,8 @@
 #define CONFIG_MMC      	1
 #define CONFIG_FAT      	1    
 #define CONFIG_DOS_PARTITION	1
+#define CONFIG_NAND_FORCE	1	/* Force NAND configuration instead of detecting (see CFG_NAND_*) */
+#define CONFIG_NAND_CCSYSLDR	1	/* Force ChinaChip system loader ECC layout */
 
 #define CFG_NO_FLASH		1
 
@@ -87,7 +72,7 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK	1	/* Allow stopping autoload even if bootdelay is zero */
 #define CONFIG_BOOTDELAY		0
-#define CONFIG_BOOTCOMMAND		"nand load 80E00000 40000 80000; go 80E10004"
+#define CONFIG_BOOTCOMMAND		"nand read 80E00000 40000 C0000; go 80E10004"
 #define CONFIG_ALTBOOTCOMMAND		"mmcinit; fatload mmc 0 80600000 zimage; go 80600000"
 #define CONFIG_BOOTFILE	        	""
 #define CONFIG_BOOTARGS			""
