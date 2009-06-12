@@ -30,6 +30,7 @@
 #define CONFIG_JZSOC		1  /* Jz SoC */
 #define CONFIG_JZ4740		1  /* Jz4740 SoC */
 #define CONFIG_A320		1  /* Dingoo A320 */
+#define CONFIG_MISC_INIT_R	1  /* Call misc_init_r() right before calling main loop */
 
 #define JZ4740_NANDBOOT_CFG	JZ4740_NANDBOOT_B8R3	/* NAND Boot config code */
 
@@ -73,10 +74,11 @@
 #define CONFIG_ZERO_BOOTDELAY_CHECK	1	/* Allow stopping autoload even if bootdelay is zero */
 #define CONFIG_BOOTDELAY		0
 #define CONFIG_BOOTCOMMAND		"nand read 80E00000 40000 C0000; go 80E10004"
-#define CONFIG_ALTBOOTCOMMAND		"mmcinit; fatload mmc 0 80600000 zimage; go 80600000"
 #define CONFIG_BOOTFILE	        	""
 #define CONFIG_BOOTARGS			""
 #define CFG_AUTOLOAD			"y"
+
+#define CONFIG_ALTBOOTCOMMAND		"mmcinit; fatload mmc 0 80600000 zimage; go 80600000"
 
 /*
  * Serial download configuration
@@ -181,5 +183,6 @@
  */
 #define GPIO_SD_CD		61	/* GPB29 */
 #define GPIO_USB_DETE		124	/* GPD28 */
+#define GPIO_BOOT_SELECT	113	/* GPD17 */
 
 #endif	/* __CONFIG_H */
