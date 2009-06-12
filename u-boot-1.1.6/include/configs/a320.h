@@ -87,7 +87,7 @@
 
 #define CONFIG_ZERO_BOOTDELAY_CHECK	1	/* Allow stopping autoload even if bootdelay is zero */
 #define CONFIG_BOOTDELAY		0
-#define CONFIG_BOOTCOMMAND		"mmcinit; fatload mmc 0 0x80600000 zimage; go 0x80600000"
+#define CONFIG_BOOTCOMMAND		"mmcinit; fatload mmc 0 80600000 zimage; go 80600000"
 #define CONFIG_BOOTFILE	        	""
 #define CONFIG_BOOTARGS			""
 #define CFG_AUTOLOAD			"y"
