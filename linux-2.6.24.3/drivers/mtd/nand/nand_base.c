@@ -2881,10 +2881,6 @@ int nand_scan_tail(struct mtd_info *mtd)
 	/* propagate ecc.layout to mtd_info */
 	mtd->ecclayout = chip->ecc.layout;
 
-	/* Check, if we should skip the bad block table scan */
-	if (chip->options & NAND_SKIP_BBTSCAN)
-		return 0;
-
         /* Create jz_mtd1 for one plane operation if the NAND support multiple 
 	   planes operation, because some partitions will only use one plane. */
 	if ((chip->planenum == 2) && !all_use_planes) {
@@ -2917,23 +2913,29 @@ int nand_scan_tail(struct mtd_info *mtd)
 		this->write_buf = nand_write_buf;
 		this->read_buf = nand_read_buf;
 
-		/* Firstly, build bad block table as one plane */
-		res = this->scan_bbt(jz_mtd1);
+		/* Check, if we should skip the bad block table scan */
+		if (!(chip->options & NAND_SKIP_BBTSCAN)) {
 
-		/* Secondly, build bad block table as 2 plane based on bbt of jz_mtd1 */
-		numblocks =  chip->chipsize >> (chip->bbt_erase_shift - 1);   /* = (real numblocks * 2) */
-		len = mtd->size >> (chip->bbt_erase_shift + 2);
-		chip->bbt = kzalloc(len, GFP_KERNEL);
+			/* Firstly, build bad block table as one plane */
+			res = this->scan_bbt(jz_mtd1);
+
+			/* Secondly, build bad block table as 2 plane based on bbt of jz_mtd1 */
+			numblocks =  chip->chipsize >> (chip->bbt_erase_shift - 1);   /* = (real numblocks * 2) */
+			len = mtd->size >> (chip->bbt_erase_shift + 2);
+			chip->bbt = kzalloc(len, GFP_KERNEL);
 
 #define isbad_2plane(block)  (((this->bbt[(block) >> 3] >> ((block) & 0x06)) 	\
 			      | (this->bbt[((block)+2) >> 3] >> (((block)+2) & 0x06))) & 0x03)
 
-		for (i = 0; i < numblocks; i += 2) {
-			if (isbad_2plane(2*i))
-				chip->bbt[i >> 3] |= 0x03 << (i & 0x6);
+			for (i = 0; i < numblocks; i += 2) {
+				if (isbad_2plane(2*i))
+					chip->bbt[i >> 3] |= 0x03 << (i & 0x6);
+			}
 		}
 	} else {
-		res = chip->scan_bbt(mtd);
+		/* Check, if we should skip the bad block table scan */
+		if (!(chip->options & NAND_SKIP_BBTSCAN))
+			res = chip->scan_bbt(mtd);
 	}
 
 #if defined(CONFIG_ALLOCATE_MTDBLOCK_JZ_EARLY) && !defined(CONFIG_SOC_JZ4730)
