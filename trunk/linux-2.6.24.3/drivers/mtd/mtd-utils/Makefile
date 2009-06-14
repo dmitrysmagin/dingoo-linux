@@ -31,7 +31,7 @@ endif
 
 RAWTARGETS = flash_erase flash_eraseall nanddump nanddump_vfat \
 	flash_info \
-	flash_otp_info flash_otp_dump nandwrite nandwrite_mlc \
+	flash_otp_info flash_otp_dump nandwrite \
         nandtest \
 	sumtool #jffs2reader
 

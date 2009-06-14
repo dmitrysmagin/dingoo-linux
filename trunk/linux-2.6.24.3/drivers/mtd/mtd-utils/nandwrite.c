@@ -37,10 +37,10 @@
 #include "mtd/mtd-user.h"
 
 #define PROGRAM "nandwrite"
-#define VERSION "$Revision: 1.1.1.1 $"
+#define VERSION "$Revision: 1.32 $"
 
-#define MAX_PAGE_SIZE	4096
-#define MAX_OOB_SIZE	128
+#define MAX_PAGE_SIZE	2048
+#define MAX_OOB_SIZE	64
 
 /*
  * Buffer array used for writing data
@@ -214,12 +214,10 @@ int main(int argc, char **argv)
 	int cnt, fd, ifd, imglen = 0, pagelen, baderaseblock, blockstart = -1;
 	struct mtd_info_user meminfo;
 	struct mtd_oob_buf oob;
-	loff_mtd_t offs;
+	loff_t offs;
 	int ret, readlen;
 	int oobinfochanged = 0;
 	struct nand_oobinfo old_oobinfo;
-
-	printf("Warning: nandwrite_mlc instead of nandwrite is used for MLC NAND!\n");
 
 	process_options(argc, argv);
 
@@ -357,7 +355,7 @@ int main(int argc, char **argv)
 
 	// Check, if length fits into device
 	if ( ((imglen / pagelen) * meminfo.writesize) > (meminfo.size - mtdoffset)) {
-		fprintf (stderr, "Image %d bytes, NAND page %d bytes, OOB area %u bytes, device size %llu bytes\n",
+		fprintf (stderr, "Image %d bytes, NAND page %d bytes, OOB area %u bytes, device size %u bytes\n",
 				imglen, pagelen, meminfo.writesize, meminfo.size);
 		perror ("Input file does not fit into device");
 		goto closeall;
@@ -384,7 +382,6 @@ int main(int argc, char **argv)
 					perror("ioctl(MEMGETBADBLOCK)");
 					goto closeall;
 				}
-
 				if (ret == 1) {
 					baderaseblock = 1;
 					if (!quiet)
@@ -477,16 +474,16 @@ int main(int argc, char **argv)
 			}
 			erase.start = blockstart;
 			erase.length = meminfo.erasesize;
-			fprintf(stderr, "Erasing failed write from 0x%09llx-0x%09llx\n",
-				erase.start, erase.start+erase.length-1);
+			fprintf(stderr, "Erasing failed write from %08lx-%08lx\n",
+				(long)erase.start, (long)erase.start+erase.length-1);
 			if (ioctl(fd, MEMERASE, &erase) != 0) {
 				perror("MEMERASE");
 				goto closeall;
 			}
 
 			if (markbad) {
-				loff_mtd_t bad_addr = mtdoffset & (~(meminfo.erasesize / blockalign) + 1);
-				fprintf(stderr, "Marking block at %09llx bad\n", (long long)bad_addr);
+				loff_t bad_addr = mtdoffset & (~(meminfo.erasesize / blockalign) + 1);
+				fprintf(stderr, "Marking block at %08lx bad\n", (long)bad_addr);
 				if (ioctl(fd, MEMSETBADBLOCK, &bad_addr)) {
 					perror("MEMSETBADBLOCK");
 					/* But continue anyway */
