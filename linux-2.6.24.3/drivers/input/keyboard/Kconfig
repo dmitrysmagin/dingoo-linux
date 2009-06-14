@@ -266,7 +266,7 @@ config KEYBOARD_JZ_KEYPAD
 	  Enable Y here to support JZ keypad.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called jz-keypad.
+	  module will be called jz_keypad.
 
 config KEYBOARD_JZ_KEYPAD_5X5
 	tristate "JZ 5x5 keypad support"
@@ -275,17 +275,19 @@ config KEYBOARD_JZ_KEYPAD_5X5
 	  Enable Y here to support JZ keypad.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called jz-keypad.
+	  module will be called jz_keypad_5x5.
 
 config KEYBOARD_JZ_GPIO_KEYS
 	tristate "JZ GPIO keys support"
 	depends on JZSOC
+	select INPUT_POLLDEV
+	select MAGIC_SYSRQ
 	help
 	  This driver implements support for buttons directly
 	  connected to single GPIO pins in the Ingenic JZ SoC.
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called jz-keypad.
+	  module will be called jz_gpio_keys.
 
 config KEYBOARD_GPIO
 	tristate "GPIO Buttons"

@@ -1,240 +1,262 @@
 /*
- * JZ Keypad ( 5 x 5 ) Driver
+ *  Keyboard driver for the IngeniC JZ SoC
  *
- * Copyright (c) 2005 - 2008  Ingenic Semiconductor Inc.
+ *  Copyright (c) 2009 Ignacio Garcia Perez <iggarpe@gmail.com>
  *
- * Author: Jason <xwang@ingenic.cn> 20090210
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License version 2 as
+ *  published by the Free Software Foundation.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+ *  TODO(IGP):
+ *  - On power slider long press, use 'o' instead of 'b' to power off instead of reboot.
+ *  - Button wake up (when idle and low power stuff works).
  *
  */
 
-#include <linux/module.h>
-#include <linux/version.h>
-
 #include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/sched.h>
-#include <linux/pm.h>
-#include <linux/sysctl.h>
-#include <linux/proc_fs.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/gpio_keys.h>
+#include <linux/input-polldev.h>
+#include <linux/module.h>
+#include <linux/sysrq.h>
 
-#include <asm/gpio.h>
 #include <asm/jzsoc.h>
 
-#define SCAN_INTERVAL_MS	20
-#define SCAN_INTERVAL		(1000000UL * SCAN_INTERVAL_MS / TICK_NSEC)
+#define SCAN_INTERVAL		(20)	/* (ms) */
+#define POWER_INTERVAL		(2000)	/* (ms) */
+#define REBOOT_INTERVAL		(5000)	/* (ms) */
+#define POWER_COUNT		(POWER_INTERVAL / SCAN_INTERVAL)
+#define REBOOT_COUNT		(REBOOT_INTERVAL / SCAN_INTERVAL)
 
-struct {
+
+
+/*
+ * NOTE: maximum 32 GPIO, since we use bits in an unsigned long to store states
+ */
+
+static const struct {
 	unsigned int gpio;
-	unsigned int active_low;
+	unsigned int actlow;	/* Active low */
+	unsigned int ncode;	/* Normal keycode */
+	unsigned int scode;	/* Special keycode */
+	unsigned int sysrq;	/* SYSRQ code */
 	unsigned int wakeup;
-	unsigned int keycode;
-	unsigned int state;
-} jz_kbd_button [] = {
+} jz_button[] = {
 
 #ifdef CONFIG_JZ4740_A320
-	{ .gpio = 102,	.active_low = 1,	.keycode = KEY_UP },		/* D-pad up */
-	{ .gpio = 123,	.active_low = 1,	.keycode = KEY_DOWN },		/* D-pad down */
-	{ .gpio = 101,	.active_low = 1,	.keycode = KEY_LEFT },		/* D-pad left */
-	{ .gpio = 114,	.active_low = 1,	.keycode = KEY_RIGHT },		/* D-pad right */
-	{ .gpio = 96,	.active_low = 1,	.keycode = KEY_LEFTCTRL },	/* A button */
-	{ .gpio = 97,	.active_low = 1,	.keycode = KEY_LEFTALT },	/* B button */
-	{ .gpio = 115,	.active_low = 1,	.keycode = KEY_SPACE },		/* X button */
-	{ .gpio = 98,	.active_low = 1,	.keycode = KEY_LEFTSHIFT },	/* Y button */
-	{ .gpio = 110,	.active_low = 1,	.keycode = KEY_TAB },		/* Left shoulder button */
-	{ .gpio = 111,	.active_low = 1,	.keycode = KEY_BACKSPACE },	/* Right shoulder button */
-	{ .gpio = 81,	.active_low = 1,	.keycode = KEY_ENTER },		/* START button */
-	{ .gpio = 113,	.active_low = 1,	.keycode = KEY_ESC },		/* SELECT button */
-#endif /* CONFIG_JZ4740_A320 */
+	{ .gpio = 102,	.actlow = 1,	.ncode = KEY_UP,	.scode = KEY_VOLUMEUP,		.sysrq = 's'	}, /* D-pad up */
+	{ .gpio = 123,	.actlow = 1, 	.ncode = KEY_DOWN,	.scode = KEY_VOLUMEDOWN,	.sysrq = 'u'	}, /* D-pad down */
+	{ .gpio = 101,	.actlow = 1,	.ncode = KEY_LEFT,	.scode = KEY_BRIGHTNESSDOWN,	.sysrq = 'e'	}, /* D-pad left */
+	{ .gpio = 114,	.actlow = 1,	.ncode = KEY_RIGHT,	.scode = KEY_BRIGHTNESSUP,	.sysrq = 'i'	}, /* D-pad right */
+	{ .gpio = 96,	.actlow = 1,	.ncode = KEY_LEFTCTRL,							}, /* A button */
+	{ .gpio = 97,	.actlow = 1,	.ncode = KEY_LEFTALT,							}, /* B button */
+	{ .gpio = 115,	.actlow = 1,	.ncode = KEY_SPACE,							}, /* X button */
+	{ .gpio = 98,	.actlow = 1,	.ncode = KEY_LEFTSHIFT,							}, /* Y button */
+	{ .gpio = 110,	.actlow = 1,	.ncode = KEY_TAB,							}, /* Left shoulder button */
+	{ .gpio = 111,	.actlow = 1,	.ncode = KEY_BACKSPACE,							}, /* Right shoulder button */
+	{ .gpio = 81,	.actlow = 1,	.ncode = KEY_ENTER,							}, /* START button */
+	{ .gpio = 113,	.actlow = 1,	.ncode = KEY_ESC,					.sysrq = 'b'	}, /* SELECT button */
+
+#define GPIO_POWER		(125)	/* Power slider */
+#define GPIO_POWER_ACTLOW	1
+#define SYSRQ_ALT		10	/* Alternate sysrq button (index in jz_button table) */
+#endif
 
 #ifdef CONFIG_JZ4740_PAVO
-	{ .gpio = 96,	.active_low = 1,	.keycode = KEY_1 },
-	{ .gpio = 97,	.active_low = 1,	.keycode = KEY_2 },
-	{ .gpio = 98,	.active_low = 1,	.keycode = KEY_3 },
-	{ .gpio = 99,	.active_low = 1,	.keycode = KEY_4 },
-#endif /* CONFIG_JZ4740_PAVO */
+	{ .gpio = 96,	.actlow = 1,	.ncode = KEY_1 },
+	{ .gpio = 97,	.actlow = 1,	.ncode = KEY_1 },
+	{ .gpio = 98,	.actlow = 1,	.ncode = KEY_1 },
+	{ .gpio = 99,	.actlow = 1,	.ncode = KEY_1 },
+#endif
 
 };
 
 
 
 struct jz_kbd {
-	unsigned int keycode[ARRAY_SIZE(jz_kbd_button)];
-	struct input_dev *input;
-
-	spinlock_t lock;
-	struct timer_list timer;
-
-	unsigned int suspended;
-	unsigned long suspend_jiffies;
+	unsigned int			keycode [2 * ARRAY_SIZE(jz_button)];
+	struct input_polled_dev *	poll_dev;
+	unsigned long			normal_state;	/* Normal key state */
+	unsigned long			special_state;	/* Special key state */
+	unsigned long			sysrq_state;	/* SYSRQ key state */
+	unsigned long			actlow;		/* Active low mask */
+	unsigned int			power_state;	/* Power slider state */
+	unsigned int			power_count;	/* Power slider active count */
 };
-static struct jz_kbd g_jz_kbd;
 
-/*
- *  Call scan function and handle 'GPIO event'(like key down, key up),
- *  and report it to upper layer of input subsystem ... if necessary
- */
-static void jz_kbd_scan(struct jz_kbd *kbd_data)
+static void jz_kbd_poll (struct input_polled_dev *dev)
 {
-	unsigned int i, state;
-	unsigned long flags;
+	struct jz_kbd *kbd = dev->private;
+	struct input_dev *input = kbd->poll_dev->input;
+	unsigned int i, p, sync = 0;
+	unsigned long s, m, x;
 
-	if (kbd_data->suspended)
-		return;
+	/* TODO: lock */
+	
+	/* Scan raw key states */
+	for (s = 0, m = 1, i = 0; i < ARRAY_SIZE(jz_button); i++, m <<= 1)
+		if (__gpio_get_pin(jz_button[i].gpio)) s |= m;
 
-	spin_lock_irqsave(&kbd_data->lock, flags);
+	/* Invert active low buttons */
+	s ^= kbd->actlow;
 
-	for (i = 0; i < ARRAY_SIZE(jz_kbd_button); i++) {
-		state = __gpio_get_pin(jz_kbd_button[i].gpio);
-		state = !state;
-
-		if (jz_kbd_button[i].state != state) {
-			jz_kbd_button[i].state = state;
-			input_report_key(kbd_data->input, kbd_data->keycode[i], state);
-			input_sync(kbd_data->input);
-		}	
-	}
-
-	spin_unlock_irqrestore(&kbd_data->lock, flags);
-}
-
-static void jz_kbd_timer_callback(unsigned long data)
-{
-	jz_kbd_scan(&g_jz_kbd);
-	mod_timer(&g_jz_kbd.timer, jiffies + SCAN_INTERVAL);
-}
-
-#ifdef CONFIG_PM
-static int jz_kbd_suspend(struct platform_device *dev, pm_message_t state)
-{
-	struct jz_kbd *jz_kbd = platform_get_drvdata(dev);
-	jz_kbd->suspended = 1;
-
-	return 0;
-}
-
-static int jz_kbd_resume(struct platform_device *dev)
-{
-	struct jz_kbd *jz_kbd = platform_get_drvdata(dev);
-
-	jz_kbd->suspend_jiffies = jiffies;
-	jz_kbd->suspended = 0;
-
-	return 0;
-}
-
+	/* Read power slider state */
+#ifdef GPIO_POWER
+#ifdef GPIO_POWER_ACTLOW
+	p = !__gpio_get_pin(GPIO_POWER);
 #else
-#define jz_kbd_suspend		NULL
-#define jz_kbd_resume		NULL
+	p = __gpio_get_pin(GPIO_POWER);
+#endif
+#else
+	p = 0;
 #endif
 
-/** 
- *  Driver init
- */
-static int __init jz_kbd_probe(struct platform_device *dev)
-{
-	struct input_dev *input_dev;
-	int i, error;
+	if (p) {
 
-	if (SCAN_INTERVAL < 1) {
-		printk("jz-gpio-keys: scan interval too small\n");
-		return -EINVAL;
+		/* If power slider and SYSRQ_ALT button are pressed... */
+#ifdef SYSRQ_ALT
+		if (s & (1 << SYSRQ_ALT)) {
+			
+			/* Calculate changed button state for system requests */
+			x = s ^ kbd->sysrq_state;
+
+			/* Generate system requests (only on keypress) */
+			for (i = 0, m = 1; i < ARRAY_SIZE(jz_button); i++, m <<= 1) {
+				if ((x & s & m) && jz_button[i].sysrq)
+					handle_sysrq(jz_button[i].sysrq, NULL);
+			}
+
+			/* Update current button state and STOP power button counter*/
+			kbd->sysrq_state = s;
+			kbd->power_count = 0;
+		}
+
+		else
+#endif
+
+		/* If power slider is pressed... */
+		{
+
+			/* Calculate changed button state for special keycodes */
+			x = s ^ kbd->special_state;
+
+			/* Generate special keycodes for changed keys */
+			for (i = 0, m = 1; i < ARRAY_SIZE(jz_button); i++, m <<= 1) {
+				if ((x & m) && jz_button[i].scode) {
+					input_report_key(input, jz_button[i].scode, s & m);
+					sync++;
+				}
+			}
+		
+			/* Update current button state */
+			kbd->special_state = s;
+
+			/* If power state just pressed, start counter, otherwise increase it */
+			if (!kbd->power_state) kbd->power_count = 1;
+			else {
+				if (kbd->power_count > 0) {
+					if (kbd->power_count == POWER_COUNT) {
+						input_report_key(input, KEY_POWER, 1);
+						input_report_key(input, KEY_POWER, 0);
+					}
+					if (kbd->power_count == REBOOT_COUNT)
+						handle_sysrq('b', NULL);
+					kbd->power_count++;
+				}
+			}
+
+			/* But force counter stopped if any button is pressed */
+			if (s) kbd->power_count = 0;
+		}
 	}
 
-	printk("jz-gpio-keys: %lu jiffies scan interval\n", SCAN_INTERVAL);
+	/* If power slider is NOT pressed... */
+	else {
 
-	input_dev = input_allocate_device();
-	if (!input_dev)
-		return -ENOMEM;
+		/* Calculate changed button state for normal keycodes */
+		x = s ^ kbd->normal_state;
 
-	platform_set_drvdata(dev, &g_jz_kbd);
+		/* Generate normal keycodes for changed keys */
+		for (i = 0, m = 1; i < ARRAY_SIZE(jz_button); i++, m <<= 1) {
+			if ((x & m) && jz_button[i].ncode) {
+				input_report_key(input, jz_button[i].ncode, s & m);
+				sync++;
+			}
+		}
 
-	spin_lock_init(&g_jz_kbd.lock);
+		/* Update current button state and STOP power button counter */
+		kbd->normal_state = s;
+		kbd->power_count = 0;
+	}
 
-	g_jz_kbd.suspend_jiffies = jiffies;
-	g_jz_kbd.input = input_dev;
+	/* Update power slider state */
+	kbd->power_state = p;
 
-	input_dev->private = &g_jz_kbd;
-	input_dev->name = "jz-gpio-keys";
+	/* Synchronize input if any keycodes sent */
+	if (sync) input_sync(input);
+
+	/* TODO: unlock */
+}
+
+static struct jz_kbd jz_kbd;
+
+static int __init jz_kbd_init(void)
+{
+	struct input_polled_dev *poll_dev;
+	struct input_dev *input_dev;
+	int i, j, error;
+
+	printk("jz-gpio-keys: scan interval %ums\n", SCAN_INTERVAL); 
+
+	poll_dev = input_allocate_polled_device();
+	if (!poll_dev) {
+		error = -ENOMEM;
+		goto fail;
+	}
+
+	jz_kbd.poll_dev = poll_dev;
+
+	poll_dev->private = &jz_kbd;
+	poll_dev->poll = jz_kbd_poll;
+	poll_dev->poll_interval = SCAN_INTERVAL;
+
+	input_dev = poll_dev->input;
+	input_dev->name = "JZ GPIO keys";
 	input_dev->phys = "jz-gpio-keys/input0";
-	input_dev->cdev.dev = &dev->dev;
-
-	input_dev->id.bustype = BUS_PARPORT;
+	input_dev->id.bustype = BUS_HOST;
 	input_dev->id.vendor = 0x0001;
 	input_dev->id.product = 0x0001;
 	input_dev->id.version = 0x0100;
 
-	input_dev->evbit[0] = BIT(EV_KEY) | BIT(EV_REP) | BIT(EV_SYN);
-	input_dev->keycode = g_jz_kbd.keycode;
-	input_dev->keycodesize = sizeof(unsigned int);
-	input_dev->keycodemax = ARRAY_SIZE(jz_kbd_button);
-
-	for (i = 0; i < ARRAY_SIZE(jz_kbd_button); i++) {
-		g_jz_kbd.keycode[i] = jz_kbd_button[i].keycode;
-		set_bit(g_jz_kbd.keycode[i], input_dev->keybit);
+	/* Prepare active low mask and keycode array/bits */
+	for (i = j = 0; i < ARRAY_SIZE(jz_button); i++) {
+		if (jz_button[i].actlow) jz_kbd.actlow |= 1 << i;
+		if (jz_button[i].ncode) {
+			jz_kbd.keycode[j++] = jz_button[i].ncode;
+			__set_bit(jz_button[i].ncode, input_dev->keybit);
+		}
+		if (jz_button[i].scode) {
+			jz_kbd.keycode[j++] = jz_button[i].scode;
+			__set_bit(jz_button[i].scode, input_dev->keybit);
+		}
 	}
 
-	error = input_register_device(input_dev);
-	if (error) {
-		pr_err("jz-gpio-keys: unable to register input device\n");
-		platform_set_drvdata(dev, NULL);
-		input_free_device(input_dev);
-		return error;
-	}
+	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP) | BIT_MASK(EV_SYN);
+	input_dev->keycode = jz_kbd.keycode;
+	input_dev->keycodesize = sizeof(jz_kbd.keycode[0]);
+	input_dev->keycodemax = j;
 
-	init_timer(&g_jz_kbd.timer);
-	g_jz_kbd.timer.function = jz_kbd_timer_callback;
-	g_jz_kbd.timer.data = (unsigned long)&g_jz_kbd;
-	mod_timer(&g_jz_kbd.timer, jiffies + SCAN_INTERVAL);
+	error = input_register_polled_device(jz_kbd.poll_dev);
+	if (error) goto fail;
 
 	return 0;
-}
 
-static int jz_kbd_remove(struct platform_device *dev)
-{
-	struct jz_kbd *kbd = platform_get_drvdata(dev);
-
-	del_timer_sync(&kbd->timer);
-
-	input_unregister_device(kbd->input);
-
-	return 0;
-}
-
-static struct platform_driver jz_kbd_driver = {
-	.probe	= jz_kbd_probe,
-	.remove	= jz_kbd_remove,
-	.suspend= jz_kbd_suspend,
-	.resume	= jz_kbd_resume,
-	.driver	= {
-		.name	= "jz-gpio-keys",
-	},
-};
-
-static struct platform_device jz_kbd_device = {
-	.name	= "jz-gpio-keys",
-	.id	= -1,
-};
-
-static int __init jz_kbd_init(void)
-{
-	platform_device_register(&jz_kbd_device);
-	return platform_driver_register(&jz_kbd_driver);
+ fail:	input_free_polled_device(poll_dev);
+	return error;
 }
 
 static void __exit jz_kbd_exit(void)
 {
-	platform_device_unregister(&jz_kbd_device);
-	platform_driver_unregister(&jz_kbd_driver);
+	input_unregister_polled_device(jz_kbd.poll_dev);
+	input_free_polled_device(jz_kbd.poll_dev);
 }
 
 module_init(jz_kbd_init);
@@ -242,4 +264,4 @@ module_exit(jz_kbd_exit);
 
 MODULE_AUTHOR("Ignacio Garcia Perez <iggarpe@gmail.com>");
 MODULE_DESCRIPTION("JZ GPIO keys driver");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPLv2");
