@@ -1,0 +1,8 @@
+This little program is inteded to fix a dump of the first eraseblock
+of NAND as written by linux (using forced 2K page size), so that the
+IPL in ROM reads the SPL.
+
+Linux stores the ECC information at offset 28 in the OOB, while the
+IPL expects it to be at offset 6. In addition, IPL won't read the
+SPL unless bytes at offsets 2 to 4 are set to 0x00.
+
