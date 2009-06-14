@@ -2562,6 +2562,15 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		busw = type->options & NAND_BUSWIDTH_16;
 	}
 
+#ifdef CONFIG_MTD_NAND_JZ4740_FORCE_PAGE2K
+	if (mtd->writesize != 2048) {
+		printk(KERN_NOTICE "NAND page size forced to 2K\n");
+		mtd->writesize	= 2048;
+		mtd->oobsize	= mtd->writesize / 32;
+		mtd->erasesize	= mtd->writesize * 128;
+	}
+#endif
+
 	/* Try to identify manufacturer */
 	for (maf_idx = 0; nand_manuf_ids[maf_idx].id != 0x0; maf_idx++) {
 		if (nand_manuf_ids[maf_idx].id == *maf_id)
@@ -2689,7 +2698,7 @@ int nand_scan_ident(struct mtd_info *mtd, int maxchips)
  */
 int nand_scan_tail(struct mtd_info *mtd)
 {
-	int i, res;
+	int i, res = 0;
 	struct nand_chip *chip = mtd->priv;
 
 	if (!(chip->options & NAND_OWN_BUFFERS))

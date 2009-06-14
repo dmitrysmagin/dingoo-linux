@@ -63,28 +63,12 @@ int nr_partitions; /* Number of partitions */
  */
 #ifdef CONFIG_JZ4740_A320
 struct mtd_partition partition_info[] = {
-	{name:"NAND BOOT partition",
-	 offset:0 * 0x100000,
-	 size:4 * 0x100000,
+	{name:"NAND SPL partition",
+	 offset:0 * 0x10000,
+	 size:4 * 0x10000,
 	 use_planes: 0,
 	 mtdblock_jz_invalid: 1},
-	{name:"NAND KERNEL partition",
-	 offset:4 * 0x100000,
-	 size:4 * 0x100000,
-	 use_planes: 0,
-	 mtdblock_jz_invalid: 1},
-	{name:"NAND ROOTFS partition",
-	 offset:8 * 0x100000,
-	 size:504 * 0x100000,
-	 use_planes: 0,
-	 mtdblock_jz_invalid: 1},
-	{name:"NAND VFAT partition",
-	 offset:512 * 0x100000,
-	 size:512 * 0x100000,
-	 use_planes: 1,
-	 mtdblock_jz_invalid: 0},
 };
-
 
 /* Define max reserved bad blocks for each partition.
  * This is used by the mtdblock-jz.c NAND FTL driver only.
@@ -95,13 +79,8 @@ struct mtd_partition partition_info[] = {
  * good blocks to be used by the NAND FTL driver when another bad
  * block generated.
  */
-static int partition_reserved_badblocks[] = {
-					     2,		/* reserved blocks of mtd0 */
-					     2,		/* reserved blocks of mtd1 */
-					     10,	/* reserved blocks of mtd2 */
-					     10,	/* reserved blocks of mtd3 */
-					     20,	/* reserved blocks of mtd4 */
-					     20};	/* reserved blocks of mtd5 */
+static int partition_reserved_badblocks[] = { 0 };	/* reserved blocks of mtd0 */
+
 #endif /* CONFIG_JZ4740_A320 */
 
 #ifdef CONFIG_JZ4740_PAVO
@@ -1004,6 +983,11 @@ int __init jznand_init(void)
 
 	/* Set & initialize NAND Flash controller */
 	jz_device_setup();
+
+	/* Disable bad block table scan */
+#ifdef CONFIG_MTD_NAND_JZ4740_SKIP_BBTSCAN
+	this->options |= NAND_SKIP_BBTSCAN;
+#endif
 
         /* Set address of NAND IO lines */
         this->IO_ADDR_R = (void __iomem *) NAND_DATA_PORT1;

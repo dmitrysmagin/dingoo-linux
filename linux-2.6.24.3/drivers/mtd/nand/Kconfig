@@ -318,6 +318,24 @@ config MTD_NAND_JZ4740
 	help
 	Support NAND Flash device on Jz4740 board
 
+config MTD_NAND_JZ4740_FORCE_PAGE2K
+	bool "Force 2K page size"
+	default n
+	depends on MTD_NAND_JZ4740 && !MTD_NAND_MULTI_PLANE
+	help
+	  Force 2K page size, overiding autodetected size.
+
+	  This is required to access the SPL area in IPL mode.
+
+config MTD_NAND_JZ4740_SKIP_BBTSCAN
+	bool "Skip bad block table scan"
+	default n
+	depends on MTD_NAND_JZ4740
+	help
+	  Skip bad block table scan.
+
+	  This is recommended to access the SPL area in IPL mode.
+
 config MTD_NAND_JZ4750
 	tristate "Support NAND Flash device on Jz4750 board"
 	depends on SOC_JZ4750 ||  SOC_JZ4750D
