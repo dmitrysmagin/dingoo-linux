@@ -50,6 +50,13 @@ static void gpio_init(void)
 	 */
 	__gpio_as_input(GPIO_SD_CD);
 	__gpio_as_input(GPIO_USB_DETE);
+
+	__gpio_as_output(GPIO_LCD_CS_N);	/* Reset LCD */
+	__gpio_set_pin(GPIO_LCD_CS_N);
+	__gpio_as_output(GPIO_LCD_RESET_N);
+	__gpio_clear_pin(GPIO_LCD_RESET_N);
+	__gpio_as_output(GPIO_LCD_BACKLIGHT);	/* Lit LCD so user knows */
+	__gpio_set_pin(GPIO_LCD_BACKLIGHT);	/* we are alive !!! */
 }
 
 //----------------------------------------------------------------------
@@ -83,9 +90,9 @@ int misc_init_r (void)
 	/*
 	 * If SELECT key pressed, use alternate boot method
 	 */
-	if (!__gpio_get_pin(GPIO_BOOT_SELECT)) {
-		printf("### bootcmd = %s\n", CONFIG_ALTBOOTCOMMAND);
+	if (!__gpio_get_pin(GPIO_BOOT_SELECT))
 		setenv("bootcmd", CONFIG_ALTBOOTCOMMAND);
-	}
+
+	return 0;
 }
 
