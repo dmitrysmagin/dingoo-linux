@@ -69,6 +69,10 @@ struct jzfb_info {
 };
 
 static struct jzfb_info jzfb = {
+#if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331)
+	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
+	320, 240, 16, 16, 60	/*16 bpp, 16 bus */
+#endif
 #ifdef CONFIG_JZ_SLCD_LGDP4551
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
 	400, 240, 16, 8, 60 	/*16 bpp, 8 bus*/
@@ -88,6 +92,9 @@ static struct jzfb_info jzfb = {
 /************************************************************************/
 
 vidinfo_t panel_info = {
+#if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331)
+	320, 240, LCD_BPP,
+#endif
 #ifdef CONFIG_JZ_SLCD_LGDP4551
 	400, 240, LCD_BPP,
 #endif
@@ -101,7 +108,6 @@ vidinfo_t panel_info = {
 #endif
 
 };
-
 
 /*----------------------------------------------------------------------*/
 
@@ -153,8 +159,8 @@ void lcd_ctrl_init (void *lcdbase)
 	jz_lcd_hw_init(&panel_info);
 	jz_lcd_desc_init(&panel_info);
 	__slcd_display_on();
-	slcd_dma_init(&panel_info);
-//	flush_screen(lcdbase); 	/* If use cpu mode, call this function to flush screen */
+//	slcd_dma_init(&panel_info);	/* This seems to make linux loading fail, at least on the A320... */
+	flush_screen(lcdbase);		/* If use cpu mode, call this function to flush screen */
 }
 
 /*----------------------------------------------------------------------*/
@@ -180,61 +186,102 @@ static void Mcupanel_RegSet(UINT32 cmd, UINT32 data)
 {
 	switch (jzfb.bus) {
 	case 8:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	case 9:
 		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
 		data = ((data << 6) & 0xfc0000) | ((data << 4) & 0xfc00) | ((data << 2) & 0xfc);
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | data;
-		break;
-	case 16:
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		break;
+
+	case 16:
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | (cmd&0xffff);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	case 18:
 		cmd = ((cmd & 0xff) << 1) | ((cmd & 0xff00) << 2); 	
  		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
- 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | cmd;
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_DATA | ((data<<6)&0xfc0000)|((data<<4)&0xfc00) | ((data<<2)&0xfc);
+ 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
+
 	default:
 		printf("Don't support %d bit Bus\n", jzfb.bus );
 		break;
 	}
 }
 
-/* Sent a command only */
+/* Sent a command withou data */
 static void Mcupanel_Command(UINT32 cmd) {
 	switch (jzfb.bus) {
 	case 8:
 	case 9:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) >> 8);
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff) >> 0);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
 		break;
+
 	case 16:
-		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		__slcd_special_rs_enable();
+
 		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | (cmd&0xffff);
-		break;
-	case 18:
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
-		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) << 2) | ((cmd&0xff) << 1);
+
+		__slcd_special_rs_disable();
 		break;
+
+	case 18:
+		__slcd_special_rs_enable();
+
+		REG_SLCD_DATA = SLCD_DATA_RS_COMMAND | ((cmd&0xff00) << 2) | ((cmd&0xff) << 1);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+
+		__slcd_special_rs_disable();
+		break;
+
 	default:
 		printf("Don't support %d bit Bus\n", jzfb.bus );
 		break;
@@ -449,7 +496,13 @@ static int  jz_lcd_hw_init(vidinfo_t *vid)
 			| SLCD_CFG_CWIDTH_16BIT | SLCD_CFG_CS_ACTIVE_LOW
 			| SLCD_CFG_RS_CMD_LOW | SLCD_CFG_CLK_ACTIVE_FALLING
 			| SLCD_CFG_TYPE_PARALLEL;
+#ifdef CONFIG_JZ4740_A320
+		REG_GPIO_PXFUNS(2) = 0x0014FFFF;	/* Dingoo A320 is a bit freaky */
+		REG_GPIO_PXSELC(2) = 0x0014FFFF;
+		REG_GPIO_PXPES(2)  = 0x0014FFFF;
+#else
 		__gpio_as_slcd_16bit();
+#endif
 		break;
 	case 18:
 		REG_SLCD_CFG = SLCD_CFG_BURST_8_WORD | SLCD_CFG_DWIDTH_18

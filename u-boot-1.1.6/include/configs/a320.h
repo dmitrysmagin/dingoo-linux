@@ -25,12 +25,20 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define CONFIG_MIPS32		1  /* MIPS32 CPU core */
-#define CONFIG_JzRISC		1  /* JzRISC core */
-#define CONFIG_JZSOC		1  /* Jz SoC */
-#define CONFIG_JZ4740		1  /* Jz4740 SoC */
-#define CONFIG_A320		1  /* Dingoo A320 */
-#define CONFIG_MISC_INIT_R	1  /* Call misc_init_r() right before calling main loop */
+#define CONFIG_MIPS32		1	/* MIPS32 CPU core */
+#define CONFIG_JzRISC		1	/* JzRISC core */
+#define CONFIG_JZSOC		1	/* Jz SoC */
+#define CONFIG_JZ4740		1	/* Jz4740 SoC */
+#define CONFIG_A320		1	/* Dingoo A320 */
+#define CONFIG_MISC_INIT_R	1	/* Call misc_init_r() right before calling main loop */
+
+//#define CONFIG_LCD
+//#define CONFIG_SLCD			/* LCD support */
+//#define CONFIG_JZ_SLCD_A320_ILI9325
+//#define SLCD_DMA_CHAN_ID		0
+//#define LCD_BPP				LCD_COLOR16
+//#define CFG_WHITE_ON_BLACK
+//#define CONFIG_LCD_LOGO
 
 #define JZ4740_NANDBOOT_CFG	JZ4740_NANDBOOT_B8R3	/* NAND Boot config code */
 
@@ -148,9 +156,11 @@
  * For the A320 we must treat the NAND as if it was 2K page size, and we want
  * to use only the first NAND block since as of yet we must get along with the
  * original firmware.
+ *
+ * The SPL is 8K long, so we reserve 16K just in case some pages are bad.
  */
-#define CFG_NAND_U_BOOT_OFFS	(64  << 10)	/* Offset to RAM U-Boot image	*/
-#define CFG_NAND_U_BOOT_SIZE	(192 << 10)	/* Size of RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_OFFS	(16  << 10)	/* Offset to RAM U-Boot image	*/
+#define CFG_NAND_U_BOOT_SIZE	(240 << 10)	/* Size of RAM U-Boot image	*/
 
 /*-----------------------------------------------------------------------
  * SDRAM Info.
@@ -184,5 +194,8 @@
 #define GPIO_SD_CD		61	/* GPB29 */
 #define GPIO_USB_DETE		124	/* GPD28 */
 #define GPIO_BOOT_SELECT	113	/* GPD17 */
+#define GPIO_LCD_BACKLIGHT	127	/* GPD31 */
+#define GPIO_LCD_CS_N		49	/* GPB17 */
+#define GPIO_LCD_RESET_N	50	/* GPB18 */
 
 #endif	/* __CONFIG_H */
