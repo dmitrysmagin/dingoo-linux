@@ -55,8 +55,6 @@ static void gpio_init(void)
 	__gpio_set_pin(GPIO_LCD_CS_N);
 	__gpio_as_output(GPIO_LCD_RESET_N);
 	__gpio_clear_pin(GPIO_LCD_RESET_N);
-	__gpio_as_output(GPIO_LCD_BACKLIGHT);	/* Lit LCD so user knows */
-	__gpio_set_pin(GPIO_LCD_BACKLIGHT);	/* we are alive !!! */
 }
 
 //----------------------------------------------------------------------

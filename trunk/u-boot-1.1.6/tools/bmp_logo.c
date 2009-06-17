@@ -65,9 +65,9 @@ int main (int argc, char *argv[])
 	bitmap_t *b = &bmp;
 	uint16_t data_offset, n_colors;
 #if defined(CONFIG_LCD)
-#if LCD_BPP==4
+#if (LCD_BPP == LCD_COLOR16)
 	short val;
-#elif LCD_BPP==5
+#elif (LCD_BPP == LCD_COLOR32)
 	int val;
 #endif
 #endif
@@ -156,12 +156,12 @@ int main (int argc, char *argv[])
 #if defined(CONFIG_LCD)
 		val = 0;
 
-#if LCD_BPP==4 
+#if (LCD_BPP == LCD_COLOR16)
 		/* RGB565(16bits) */
 		val = 	((b->palette[(int)(i*3+0)] >> 3) & 0x1F )<< 11 | \
 			((b->palette[(int)(i*3+1)] >> 2) & 0x3F )<< 5  | \
 			((b->palette[(int)(i*3+2)] >> 3) & 0x1F );
-#elif LCD_BPP==5
+#elif (LCD_BPP == LCD_COLOR32)
 		/* RGB666(18bits) */
 		val = 	b->palette[(int)(i*3+0)] << 16 | \
 			b->palette[(int)(i*3+1)] << 8  | \
