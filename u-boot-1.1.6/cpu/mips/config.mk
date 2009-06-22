@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-MIPSFLAGS = -mtune=r4600 -mips32 -O2
+MIPSFLAGS = -mtune=r4600 -mips32 -Os
 
 #ENDIANNESS = -EL
 
