@@ -80,6 +80,7 @@ extern int serial_init(void);
 extern void serial_puts(const char *s);
 extern void sdram_init(void);
 extern void pll_init(void);
+extern void slcd_init(void);
 
 /*
  * NAND flash routines
@@ -242,10 +243,10 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf)
 		stat = REG_EMC_NFINTS;
 		if (stat & EMC_NFINTS_ERR) {
 			/* Error occurred */
-//			serial_puts("\n Error occurred\n");
+//			serial_puts(" Error occurred\n");
 			if (stat & EMC_NFINTS_UNCOR) {
 				/* Uncorrectable error occurred */
-//					serial_puts("\nUncorrectable error occurred\n");
+//				serial_puts("Uncorrectable error occurred\n");
 			}
 			else {
 				unsigned int errcnt, index, mask;
@@ -356,10 +357,11 @@ void nand_boot(void)
 	gpio_init();
 	serial_init();
 
-	serial_puts("\n\nNAND Secondary Program Loader\n\n");
+	serial_puts("\nNAND Secondary Program Loader\n");
 
 	pll_init();
 	sdram_init();
+	slcd_init();
 	nand_init();
 
 #if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R3)

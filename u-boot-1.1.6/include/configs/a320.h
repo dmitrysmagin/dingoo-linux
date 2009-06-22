@@ -32,6 +32,16 @@
 #define CONFIG_A320		1	/* Dingoo A320 */
 #define CONFIG_MISC_INIT_R	1	/* Call misc_init_r() right before calling main loop */
 
+/*
+ * This alone will enable LCD initialization only in the NAND SPL code
+ */
+#define CONFIG_JZ_SLCD
+#define CONFIG_JZ_SLCD_A320_ILI9325
+//#define CONFIG_JZ_SLCD_A320_ILI9331
+
+/*
+ * This will enable LCD support in the u-boot code
+ */
 //#define CONFIG_LCD
 //#define CONFIG_SLCD			/* LCD support */
 //#define CONFIG_JZ_SLCD_A320_ILI9325
@@ -194,8 +204,6 @@
 #define GPIO_SD_CD		61	/* GPB29 */
 #define GPIO_USB_DETE		124	/* GPD28 */
 #define GPIO_BOOT_SELECT	113	/* GPD17 */
-#define GPIO_LCD_BACKLIGHT	127	/* GPD31 */
-#define GPIO_LCD_CS_N		49	/* GPB17 */
-#define GPIO_LCD_RESET_N	50	/* GPB18 */
+
 
 #endif	/* __CONFIG_H */
