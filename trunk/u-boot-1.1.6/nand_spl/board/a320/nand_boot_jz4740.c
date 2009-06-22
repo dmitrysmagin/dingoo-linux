@@ -172,7 +172,7 @@ static int nand_read_oob(int page_addr, uchar *buf, int size)
 	return 0;
 }
 
-static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf)
+static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 {
 	uchar *databuf = dst, *tmpbuf;
 	int i, j;
@@ -223,11 +223,16 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf)
 
 		/* Set PAR values */
 		for (j = 0; j < PAR_SIZE; j++) {
+			if (sysldr) {
+				/* Weird ECC positions for ChinaChip system loader */
+				*paraddr++ = oobbuf[4 + i*12 + j];
+			} else {
 #if defined(CFG_NAND_ECC_POS)
-			*paraddr++ = oobbuf[CFG_NAND_ECC_POS + i*PAR_SIZE + j];
+				*paraddr++ = oobbuf[CFG_NAND_ECC_POS + i*PAR_SIZE + j];
 #else
-			*paraddr++ = oobbuf[ECC_POS + i*PAR_SIZE + j];
+				*paraddr++ = oobbuf[ECC_POS + i*PAR_SIZE + j];
 #endif
+			}
 		}
 
 		/* Set PRDY */
@@ -289,7 +294,7 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf)
 #define CFG_NAND_BADBLOCK_PAGE 0 /* NAND bad block was marked at this page in a block, starting from 0 */
 #endif
 
-static void nand_load(int offs, int uboot_size, uchar *dst)
+static void nand_load(int offs, int uboot_size, uchar *dst, int sysldr)
 {
 	int page;
 	int pagecopy_count;
@@ -308,7 +313,7 @@ static void nand_load(int offs, int uboot_size, uchar *dst)
 			}
 		}
 		/* Load this page to dst, do the ECC */
-		nand_read_page(page, dst, oob_buf);
+		nand_read_page(page, dst, oob_buf, sysldr);
 
 		dst += page_size;
 		page++;
@@ -349,7 +354,7 @@ static void gpio_init(void)
 
 void nand_boot(void)
 {
-	void (*uboot)(void);
+	void (*uboot)(int);
 
 	/*
 	 * Init hardware
@@ -390,15 +395,20 @@ void nand_boot(void)
 	oob_size = page_size / 32;
 	ecc_count = page_size / ECC_BLOCK;
 
-	/*
-	 * Load U-Boot image from NAND into RAM
-	 */
-	nand_load(CFG_NAND_U_BOOT_OFFS, CFG_NAND_U_BOOT_SIZE,
-		  (uchar *)CFG_NAND_U_BOOT_DST);
+	/* If boot selection key NOT PRESSED, boot system loader */
+	if (__gpio_get_pin(GPIO_BOOT_SELECT)) {
+		nand_load(0x00040000, 0x000C0000, (uchar *)0x80E00000, 1);
+		uboot = (void (*)(int))0x80E10008;
+		serial_puts("Starting system loader ...\n");
+	}
 
-	uboot = (void (*)(void))CFG_NAND_U_BOOT_START;
-
-	serial_puts("Starting U-Boot ...\n");
+	/* If boot selection key PRESSED, boot U-Boot */
+	else {
+		nand_load(CFG_NAND_U_BOOT_OFFS, CFG_NAND_U_BOOT_SIZE,
+			  (uchar *)CFG_NAND_U_BOOT_DST, 0);
+		uboot = (void (*)(int))CFG_NAND_U_BOOT_START;
+		serial_puts("Starting U-Boot ...\n");
+	}
 
 	/*
 	 * Flush caches
@@ -408,5 +418,5 @@ void nand_boot(void)
 	/*
 	 * Jump to U-Boot image
 	 */
-	(*uboot)();
+	(*uboot)(0);
 }

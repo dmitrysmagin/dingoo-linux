@@ -78,14 +78,6 @@ int checkboard (void)
 
 int misc_init_r (void)
 {
-	const char *str;
-
-	/*
-	 * If SELECT key pressed, use alternate boot method
-	 */
-	if (!__gpio_get_pin(GPIO_BOOT_SELECT))
-		setenv("bootcmd", CONFIG_ALTBOOTCOMMAND);
-
 	return 0;
 }
 
