@@ -375,6 +375,7 @@ static void gpio_init(void)
 
 void nand_boot(void)
 {
+	int boot_sel;
 	void (*uboot)(int);
 
 	/*
@@ -382,6 +383,8 @@ void nand_boot(void)
 	 */
 	gpio_init();
 	serial_init();
+
+	boot_sel = __gpio_get_pin(GPIO_BOOT_SELECT);
 
 	serial_puts("\nNAND Secondary Program Loader\n");
 
@@ -391,7 +394,7 @@ void nand_boot(void)
 	nand_init();
 
 	/* If boot selection key NOT PRESSED, boot system loader */
-	if (__gpio_get_pin(GPIO_BOOT_SELECT)) {
+	if (boot_sel) {
 		nand_load(0x00040000, 0x000C0000, (uchar *)0x80E00000, 1);
 		uboot = (void (*)(int))0x80E10008;
 		serial_puts("Starting system loader ...\n");
@@ -405,13 +408,6 @@ void nand_boot(void)
 		serial_puts("Starting U-Boot ...\n");
 	}
 
-	/*
-	 * Flush caches
-	 */
-	flush_cache_all();
-
-	/*
-	 * Jump to U-Boot image
-	 */
-	(*uboot)(0);
+	flush_cache_all();	/* Flush caches */
+	(*uboot)(0);		/* Jump to image */
 }
