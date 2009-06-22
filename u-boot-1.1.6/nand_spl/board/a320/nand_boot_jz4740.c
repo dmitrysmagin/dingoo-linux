@@ -339,6 +339,11 @@ static void gpio_init(void)
 	 * Initialize UART0 pins
 	 */
 	__gpio_as_uart0();
+
+	/*
+	 * Initialize NAND pins
+	 */
+	__gpio_as_nand();
 }
 
 void nand_boot(void)
@@ -348,7 +353,6 @@ void nand_boot(void)
 	/*
 	 * Init hardware
 	 */
-	nand_init();
 	gpio_init();
 	serial_init();
 
@@ -356,6 +360,7 @@ void nand_boot(void)
 
 	pll_init();
 	sdram_init();
+	nand_init();
 
 #if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R3)
 	bus_width = 8;
