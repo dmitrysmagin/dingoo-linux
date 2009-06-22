@@ -61,20 +61,41 @@ static inline void __nand_dev_ready(void)
 /*
  * NAND flash parameters
  */
-static int bus_width = 8;
-static int page_size = 2048;
-static int oob_size = 64;
-static int ecc_count = 4;
-static int row_cycle = 3;
-static int page_per_block = 64;
-static int bad_block_pos = 0;
-static int block_size = 131072;
 
-static unsigned char oob_buf[128] = {0};
+#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R3)
+#define CFG_NAND_BUS_WIDTH	8
+#define CFG_NAND_ROW_CYCLE	3
+#endif
+
+#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R2)
+#define CFG_NAND_BUS_WIDTH	8
+#define CFG_NAND_ROW_CYCLE	2
+#endif
+
+#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B16R3)
+#define CFG_NAND_BUS_WIDTH	16
+#define CFG_NAND_ROW_CYCLE	3
+#endif
+
+#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B16R2)
+#define CFG_NAND_BUS_WIDTH	16
+#define CFG_NAND_ROW_CYCLE	2
+#endif
+
+#if (CFG_NAND_PAGE_SIZE == 512)
+#define CFG_NAND_BAD_BLOCK_POS	5
+#else
+#define CFG_NAND_BAD_BLOCK_POS	0
+#endif
+
+#define CFG_NAND_PAGE_PER_BLOCK	(CFG_NAND_BLOCK_SIZE / CFG_NAND_PAGE_SIZE)
+#define CFG_NAND_OOB_SIZE	(CFG_NAND_PAGE_SIZE / 32)
+#define CFG_NAND_ECC_COUNT	(CFG_NAND_PAGE_SIZE / ECC_BLOCK)
 
 /*
  * External routines
  */
+
 extern void flush_cache_all(void);
 extern int serial_init(void);
 extern void serial_puts(const char *s);
@@ -133,14 +154,14 @@ static void rs_correct(unsigned char *dat, int idx, int mask)
 static int nand_read_oob(int page_addr, uchar *buf, int size)
 {
 	int col_addr;
-	if (page_size != 512)
-		col_addr = page_size;
+	if (CFG_NAND_PAGE_SIZE != 512)
+		col_addr = CFG_NAND_PAGE_SIZE;
 	else {
 		col_addr = 0;
 		__nand_dev_ready();
 	}
 
-	if (page_size != 512)
+	if (CFG_NAND_PAGE_SIZE != 512)
 		/* Send READ0 command */
 		__nand_cmd(NAND_CMD_READ0);
 	else
@@ -149,30 +170,30 @@ static int nand_read_oob(int page_addr, uchar *buf, int size)
 
 	/* Send column address */
 	__nand_addr(col_addr & 0xff);
-	if (page_size != 512)
+	if (CFG_NAND_PAGE_SIZE != 512)
 		__nand_addr((col_addr >> 8) & 0xff);
 
 	/* Send page address */
 	__nand_addr(page_addr & 0xff);
 	__nand_addr((page_addr >> 8) & 0xff);
-	if (row_cycle == 3)
+	if (CFG_NAND_ROW_CYCLE == 3)
 		__nand_addr((page_addr >> 16) & 0xff);
 
 	/* Send READSTART command for 2048 or 4096 ps NAND */
-	if (page_size != 512)
+	if (CFG_NAND_PAGE_SIZE != 512)
 		__nand_cmd(NAND_CMD_READSTART);
 
 	/* Wait for device ready */
 	__nand_dev_ready();
 
 	/* Read oob data */
-	nand_read_buf(buf, size, bus_width);
-	if (page_size == 512)
+	nand_read_buf(buf, size, CFG_NAND_BUS_WIDTH);
+	if (CFG_NAND_PAGE_SIZE == 512)
 		__nand_dev_ready();
 	return 0;
 }
 
-static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
+static int nand_read_page(int page_addr, uchar *dst, uchar *oob_buf, int sysldr)
 {
 	uchar *databuf = dst, *tmpbuf;
 	int i, j;
@@ -180,7 +201,7 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 	/*
 	 * Read oob data
 	 */
-	nand_read_oob(page_addr, oobbuf, oob_size);
+	nand_read_oob(page_addr, oob_buf, CFG_NAND_OOB_SIZE);
 
 	/*
 	 * Read page data
@@ -191,17 +212,17 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 
 	/* Send column address */
 	__nand_addr(0);
-	if (page_size != 512)
+	if (CFG_NAND_PAGE_SIZE != 512)
 		__nand_addr(0);
 
 	/* Send page address */
 	__nand_addr(page_addr & 0xff);
 	__nand_addr((page_addr >> 8) & 0xff);
-	if (row_cycle == 3)
+	if (CFG_NAND_ROW_CYCLE == 3)
 		__nand_addr((page_addr >> 16) & 0xff);
 
 	/* Send READSTART command for 2048 or 4096 ps NAND */
-	if (page_size != 512)
+	if (CFG_NAND_PAGE_SIZE != 512)
 		__nand_cmd(NAND_CMD_READSTART);
 
 	/* Wait for device ready */
@@ -210,7 +231,7 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 	/* Read page data */
 	tmpbuf = databuf;
 
-	for (i = 0; i < ecc_count; i++) {
+	for (i = 0; i < CFG_NAND_ECC_COUNT; i++) {
 		volatile unsigned char *paraddr = (volatile unsigned char *)EMC_NFPAR0;
 		unsigned int stat;
 
@@ -219,18 +240,18 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 		__nand_ecc_rs_decoding();
 
 		/* Read data */
-		nand_read_buf((void *)tmpbuf, ECC_BLOCK, bus_width);
+		nand_read_buf((void *)tmpbuf, ECC_BLOCK, CFG_NAND_BUS_WIDTH);
 
 		/* Set PAR values */
 		for (j = 0; j < PAR_SIZE; j++) {
 			if (sysldr) {
 				/* Weird ECC positions for ChinaChip system loader */
-				*paraddr++ = oobbuf[4 + i*12 + j];
+				*paraddr++ = oob_buf[4 + i*12 + j];
 			} else {
 #if defined(CFG_NAND_ECC_POS)
-				*paraddr++ = oobbuf[CFG_NAND_ECC_POS + i*PAR_SIZE + j];
+				*paraddr++ = oob_buf[CFG_NAND_ECC_POS + i*PAR_SIZE + j];
 #else
-				*paraddr++ = oobbuf[ECC_POS + i*PAR_SIZE + j];
+				*paraddr++ = oob_buf[ECC_POS + i*PAR_SIZE + j];
 #endif
 			}
 		}
@@ -296,18 +317,18 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oobbuf, int sysldr)
 
 static void nand_load(int offs, int uboot_size, uchar *dst, int sysldr)
 {
-	int page;
-	int pagecopy_count;
+	int page, pagecopy_count;
+	uchar oob_buf[CFG_NAND_OOB_SIZE];
 
 	__nand_enable();
 
-	page = offs / page_size;
+	page = offs / CFG_NAND_PAGE_SIZE;
 	pagecopy_count = 0;
-	while (pagecopy_count < (uboot_size / page_size)) {
-		if (page % page_per_block == 0) {
-			nand_read_oob(page + CFG_NAND_BADBLOCK_PAGE, oob_buf, oob_size);
-			if (oob_buf[bad_block_pos] != 0xff) {
-				page += page_per_block;
+	while (pagecopy_count < (uboot_size / CFG_NAND_PAGE_SIZE)) {
+		if (page % CFG_NAND_PAGE_PER_BLOCK == 0) {
+			nand_read_oob(page + CFG_NAND_BADBLOCK_PAGE, oob_buf, CFG_NAND_OOB_SIZE);
+			if (oob_buf[CFG_NAND_BAD_BLOCK_POS] != 0xff) {
+				page += CFG_NAND_PAGE_PER_BLOCK;
 				/* Skip bad block */
 				continue;
 			}
@@ -315,7 +336,7 @@ static void nand_load(int offs, int uboot_size, uchar *dst, int sysldr)
 		/* Load this page to dst, do the ECC */
 		nand_read_page(page, dst, oob_buf, sysldr);
 
-		dst += page_size;
+		dst += CFG_NAND_PAGE_SIZE;
 		page++;
 		pagecopy_count++;
 	}
@@ -368,32 +389,6 @@ void nand_boot(void)
 	sdram_init();
 	slcd_init();
 	nand_init();
-
-#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R3)
-	bus_width = 8;
-	row_cycle = 3;
-#endif
-
-#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B8R2)
-	bus_width = 8;
-	row_cycle = 2;
-#endif
-
-#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B16R3)
-	bus_width = 16;
-	row_cycle = 3;
-#endif
-
-#if (JZ4740_NANDBOOT_CFG == JZ4740_NANDBOOT_B16R2)
-	bus_width = 16;
-	row_cycle = 2;
-#endif
-	page_size = CFG_NAND_PAGE_SIZE;
-	block_size = CFG_NAND_BLOCK_SIZE;
-	page_per_block = CFG_NAND_BLOCK_SIZE / CFG_NAND_PAGE_SIZE;
-	bad_block_pos = (page_size == 512) ? 5 : 0;
-	oob_size = page_size / 32;
-	ecc_count = page_size / ECC_BLOCK;
 
 	/* If boot selection key NOT PRESSED, boot system loader */
 	if (__gpio_get_pin(GPIO_BOOT_SELECT)) {
