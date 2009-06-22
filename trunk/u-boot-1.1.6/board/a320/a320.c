@@ -50,11 +50,6 @@ static void gpio_init(void)
 	 */
 	__gpio_as_input(GPIO_SD_CD);
 	__gpio_as_input(GPIO_USB_DETE);
-
-	__gpio_as_output(GPIO_LCD_CS_N);	/* Reset LCD */
-	__gpio_set_pin(GPIO_LCD_CS_N);
-	__gpio_as_output(GPIO_LCD_RESET_N);
-	__gpio_clear_pin(GPIO_LCD_RESET_N);
 }
 
 //----------------------------------------------------------------------

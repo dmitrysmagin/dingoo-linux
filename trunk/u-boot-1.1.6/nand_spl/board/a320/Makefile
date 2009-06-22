@@ -30,7 +30,7 @@ AFLAGS	+= -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_NAND_SPL
 
 SOBJS	= start.o
-COBJS	= nand_boot_jz4740.o cpu.o jz4740.o jz_serial.o
+COBJS	= nand_boot_jz4740.o cpu.o jz4740.o jz4740_slcd.o jz_serial.o jz_delay.o logo.o lzw.o
 
 SRCS	:= $(addprefix $(obj),$(SOBJS:.o=.S) $(COBJS:.o=.c))
 OBJS	:= $(addprefix $(obj),$(SOBJS) $(COBJS))

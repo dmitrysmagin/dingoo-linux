@@ -27,103 +27,7 @@
 #include <asm/mipsregs.h>
 #include <asm/addrspace.h>
 #include <asm/cacheops.h>
-
-#ifdef CONFIG_JZ4730
-#include <asm/jz4730.h>
-#endif
-
-#ifdef CONFIG_JZ4740
 #include <asm/jz4740.h>
-#endif
-
-#ifdef CONFIG_JZ5730
-#include <asm/jz5730.h>
-#endif
-
-#ifdef CONFIG_JZ4750
-#include <asm/jz4750.h>
-#endif
-
-#if !defined (CONFIG_NAND_SPL) && !defined (CONFIG_MSC_SPL) 
-
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
-{
-#ifdef CONFIG_JZ4730
-	__wdt_set_count(0xffffffff-32);
-	__wdt_start();
-	while(1);
-#endif
-#ifdef CONFIG_JZ4740
-	__wdt_select_extalclk();
-	__wdt_select_clk_div64();
-	__wdt_set_data(100);
-	__wdt_set_count(0);
-	__tcu_start_wdt_clock();
-	__wdt_start();
-	while(1);
-#endif
-#if defined(CONFIG_INCA_IP)
-	*INCA_IP_WDT_RST_REQ = 0x3f;
-#elif defined(CONFIG_PURPLE) || defined(CONFIG_TB0229) || defined(CONFIG_JzRISC)
-	void (*f)(void) = (void *) 0xbfc00000;
-
-	f();
-#endif
-	fprintf(stderr, "*** reset failed ***\n");
-	return 0;
-}
-
-#define cache16_unroll32(base,op)				\
-	__asm__ __volatile__("					\
-		.set noreorder;					\
-		.set mips3;					\
-		cache %1, 0x000(%0); cache %1, 0x010(%0);	\
-		cache %1, 0x020(%0); cache %1, 0x030(%0);	\
-		cache %1, 0x040(%0); cache %1, 0x050(%0);	\
-		cache %1, 0x060(%0); cache %1, 0x070(%0);	\
-		cache %1, 0x080(%0); cache %1, 0x090(%0);	\
-		cache %1, 0x0a0(%0); cache %1, 0x0b0(%0);	\
-		cache %1, 0x0c0(%0); cache %1, 0x0d0(%0);	\
-		cache %1, 0x0e0(%0); cache %1, 0x0f0(%0);	\
-		cache %1, 0x100(%0); cache %1, 0x110(%0);	\
-		cache %1, 0x120(%0); cache %1, 0x130(%0);	\
-		cache %1, 0x140(%0); cache %1, 0x150(%0);	\
-		cache %1, 0x160(%0); cache %1, 0x170(%0);	\
-		cache %1, 0x180(%0); cache %1, 0x190(%0);	\
-		cache %1, 0x1a0(%0); cache %1, 0x1b0(%0);	\
-		cache %1, 0x1c0(%0); cache %1, 0x1d0(%0);	\
-		cache %1, 0x1e0(%0); cache %1, 0x1f0(%0);	\
-		.set mips0;					\
-		.set reorder"					\
-		:						\
-		: "r" (base),					\
-		  "i" (op));
-
-void flush_cache (ulong start_addr, ulong size)
-{
-#ifdef CONFIG_JzRISC
-	unsigned long start = start_addr;
-	unsigned long end = start + size;
-
-	while (start < end) {
-		cache16_unroll32(start,Hit_Writeback_Inv_D);
-		start += 0x200;
-	}
-#endif
-}
-
-void write_one_tlb( int index, u32 pagemask, u32 hi, u32 low0, u32 low1 ){
-	write_32bit_cp0_register(CP0_ENTRYLO0, low0);
-	write_32bit_cp0_register(CP0_PAGEMASK, pagemask);
-	write_32bit_cp0_register(CP0_ENTRYLO1, low1);
-	write_32bit_cp0_register(CP0_ENTRYHI, hi);
-	write_32bit_cp0_register(CP0_INDEX, index);
-	tlb_write_indexed();
-}
-
-#endif /* !CONFIG_NAND_SPL */
-
-#ifdef CONFIG_JzRISC
 
 void flush_icache_all(void)
 {
@@ -177,4 +81,3 @@ void flush_cache_all(void)
 	flush_icache_all();
 }
 
-#endif

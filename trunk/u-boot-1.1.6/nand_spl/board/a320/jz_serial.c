@@ -24,27 +24,8 @@
  */
 
 #include <config.h>
-
-#if defined(CONFIG_JZ4730) || defined(CONFIG_JZ4740) || defined(CONFIG_JZ4750) \
-	|| defined(CONFIG_JZ4750D) || defined(CONFIG_JZ5730)
-
 #include <common.h>
-
-#if defined(CONFIG_JZ4730)
-#include <asm/jz4730.h>
-#endif
-#if defined(CONFIG_JZ4740)
 #include <asm/jz4740.h>
-#endif
-#if defined(CONFIG_JZ4750)
-#include <asm/jz4750.h>
-#endif
-#if defined(CONFIG_JZ4750D)
-#include <asm/jz4750d.h>
-#endif
-#if defined(CONFIG_JZ5730)
-#include <asm/jz5730.h>
-#endif
 
 #undef UART_BASE
 #ifndef CFG_UART_BASE
@@ -144,15 +125,6 @@ void serial_puts (const char *s)
 	}
 }
 
-int serial_getc (void)
-{
-	volatile u8 *uart_rdr = (volatile u8 *)(UART_BASE + OFF_RDR);
-
-	while (!serial_tstc());
-
-	return *uart_rdr;
-}
-
 int serial_tstc (void)
 {
 	volatile u8 *uart_lsr = (volatile u8 *)(UART_BASE + OFF_LSR);
@@ -164,4 +136,3 @@ int serial_tstc (void)
 	return 0;
 }
 
-#endif /* CONFIG_JZ4730 || CONFIG_JZ4740 || CONFIG_JZ4750 || CONFIG_JZ45730 */
