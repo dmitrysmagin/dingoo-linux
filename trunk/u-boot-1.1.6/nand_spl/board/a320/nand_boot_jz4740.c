@@ -25,6 +25,18 @@
 #include <asm/jz4740.h>
 
 /*
+ * Image loading parameters
+ */
+
+typedef void (*image_start_t)(int);
+
+int		image_weird_ecc;
+int		image_offs;
+int		image_size;
+uchar *		image_dst;
+image_start_t	image_start;
+
+/*
  * NAND flash definitions
  */
 
@@ -107,7 +119,8 @@ extern void slcd_init(void);
  * NAND flash routines
  */
 
-static inline void nand_read_buf16(void *buf, int count)
+#if (CFG_NAND_BUS_WIDTH == 16)
+static inline void nand_read_buf(void *buf, int count)
 {
 	int i;
 	u16 *p = (u16 *)buf;
@@ -115,8 +128,10 @@ static inline void nand_read_buf16(void *buf, int count)
 	for (i = 0; i < count; i += 2)
 		*p++ = __nand_data16();
 }
+#endif
 
-static inline void nand_read_buf8(void *buf, int count)
+#if (CFG_NAND_BUS_WIDTH == 8)
+static inline void nand_read_buf(void *buf, int count)
 {
 	int i;
 	u8 *p = (u8 *)buf;
@@ -124,14 +139,7 @@ static inline void nand_read_buf8(void *buf, int count)
 	for (i = 0; i < count; i++)
 		*p++ = __nand_data8();
 }
-
-static inline void nand_read_buf(void *buf, int count, int bw)
-{
-	if (bw == 8)
-		nand_read_buf8(buf, count);
-	else
-		nand_read_buf16(buf, count);
-}
+#endif
 
 /* Correct 1~9-bit errors in 512-bytes data */
 static void rs_correct(unsigned char *dat, int idx, int mask)
@@ -187,13 +195,13 @@ static int nand_read_oob(int page_addr, uchar *buf, int size)
 	__nand_dev_ready();
 
 	/* Read oob data */
-	nand_read_buf(buf, size, CFG_NAND_BUS_WIDTH);
+	nand_read_buf(buf, size);
 	if (CFG_NAND_PAGE_SIZE == 512)
 		__nand_dev_ready();
 	return 0;
 }
 
-static int nand_read_page(int page_addr, uchar *dst, uchar *oob_buf, int sysldr)
+static int nand_read_page(int page_addr, uchar *dst, uchar *oob_buf)
 {
 	uchar *databuf = dst, *tmpbuf;
 	int i, j;
@@ -240,11 +248,11 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oob_buf, int sysldr)
 		__nand_ecc_rs_decoding();
 
 		/* Read data */
-		nand_read_buf((void *)tmpbuf, ECC_BLOCK, CFG_NAND_BUS_WIDTH);
+		nand_read_buf((void *)tmpbuf, ECC_BLOCK);
 
 		/* Set PAR values */
 		for (j = 0; j < PAR_SIZE; j++) {
-			if (sysldr) {
+			if (image_weird_ecc) {
 				/* Weird ECC positions for ChinaChip system loader */
 				*paraddr++ = oob_buf[4 + i*12 + j];
 			} else {
@@ -315,16 +323,16 @@ static int nand_read_page(int page_addr, uchar *dst, uchar *oob_buf, int sysldr)
 #define CFG_NAND_BADBLOCK_PAGE 0 /* NAND bad block was marked at this page in a block, starting from 0 */
 #endif
 
-static void nand_load(int offs, int uboot_size, uchar *dst, int sysldr)
+static void nand_load(void)
 {
 	int page, pagecopy_count;
 	uchar oob_buf[CFG_NAND_OOB_SIZE];
 
 	__nand_enable();
 
-	page = offs / CFG_NAND_PAGE_SIZE;
+	page = image_offs / CFG_NAND_PAGE_SIZE;
 	pagecopy_count = 0;
-	while (pagecopy_count < (uboot_size / CFG_NAND_PAGE_SIZE)) {
+	while (pagecopy_count < (image_size / CFG_NAND_PAGE_SIZE)) {
 		if (page % CFG_NAND_PAGE_PER_BLOCK == 0) {
 			nand_read_oob(page + CFG_NAND_BADBLOCK_PAGE, oob_buf, CFG_NAND_OOB_SIZE);
 			if (oob_buf[CFG_NAND_BAD_BLOCK_POS] != 0xff) {
@@ -334,9 +342,9 @@ static void nand_load(int offs, int uboot_size, uchar *dst, int sysldr)
 			}
 		}
 		/* Load this page to dst, do the ECC */
-		nand_read_page(page, dst, oob_buf, sysldr);
+		nand_read_page(page, image_dst, oob_buf);
 
-		dst += CFG_NAND_PAGE_SIZE;
+		image_dst += CFG_NAND_PAGE_SIZE;
 		page++;
 		pagecopy_count++;
 	}
@@ -376,38 +384,38 @@ static void gpio_init(void)
 void nand_boot(void)
 {
 	int boot_sel;
-	void (*uboot)(int);
 
-	/*
-	 * Init hardware
-	 */
-	gpio_init();
+	gpio_init();	/* Basic hardware initialization */
 	serial_init();
 
 	boot_sel = __gpio_get_pin(GPIO_BOOT_SELECT);
 
 	serial_puts("\nNAND Secondary Program Loader\n");
 
-	pll_init();
+	pll_init();	/* More hardware initialization */
 	sdram_init();
 	slcd_init();
 	nand_init();
 
-	/* If boot selection key NOT PRESSED, boot system loader */
+	/* Defaults for U-Boot image */
+	image_weird_ecc = 0;
+	image_offs = CFG_NAND_U_BOOT_OFFS;
+	image_size = CFG_NAND_U_BOOT_SIZE;
+	image_dst = (uchar *)CFG_NAND_U_BOOT_DST;
+	image_start = (image_start_t)CFG_NAND_U_BOOT_START;
+
+	/* If boot selection key NOT PRESSED, boot system loader instead */
 	if (boot_sel) {
-		nand_load(0x00040000, 0x000C0000, (uchar *)0x80E00000, 1);
-		uboot = (void (*)(int))0x80E10008;
-		serial_puts("Starting system loader ...\n");
+		mdelay(1000);
+		image_weird_ecc = 1;
+		image_offs = 0x00040000;
+		image_size = 0x000C0000;
+		image_dst = (uchar *)0x80E00000;
+		image_start = (image_start_t)0x80E10008;
 	}
 
-	/* If boot selection key PRESSED, boot U-Boot */
-	else {
-		nand_load(CFG_NAND_U_BOOT_OFFS, CFG_NAND_U_BOOT_SIZE,
-			  (uchar *)CFG_NAND_U_BOOT_DST, 0);
-		uboot = (void (*)(int))CFG_NAND_U_BOOT_START;
-		serial_puts("Starting U-Boot ...\n");
-	}
-
+	nand_load();		/* Load image */
 	flush_cache_all();	/* Flush caches */
-	(*uboot)(0);		/* Jump to image */
+	(*image_start)(0);	/* Jump to image */
 }
+
