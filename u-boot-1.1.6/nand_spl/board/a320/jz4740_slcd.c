@@ -318,8 +318,6 @@ void slcd_init (void)
 	/* Enable backlight */
 	__gpio_as_output(PIN_BKLIGHT);
 	__gpio_set_pin(PIN_BKLIGHT);
-
-	mdelay(1000);
 }
 
 #endif /* CONFIG_JZ_SLCD */
