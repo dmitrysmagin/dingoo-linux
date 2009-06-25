@@ -131,7 +131,6 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 
 		else
 #endif
-
 		/* If power slider is pressed... */
 		{
 
@@ -157,8 +156,11 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 						input_report_key(input, KEY_POWER, 1);
 						input_report_key(input, KEY_POWER, 0);
 					}
-					if (kbd->power_count == REBOOT_COUNT)
-						handle_sysrq('b', NULL);
+					if (kbd->power_count == REBOOT_COUNT) {
+ 						handle_sysrq('s', NULL); /* Force sync */
+						handle_sysrq('u', NULL); /* Force read-only remount */
+						handle_sysrq('b', NULL); /* Immediate reboot */
+					}
 					kbd->power_count++;
 				}
 			}
