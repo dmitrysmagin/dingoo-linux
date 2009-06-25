@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.24.3
-# Fri Jun 12 13:18:27 2009
+# Tue Jun 23 01:50:46 2009
 #
 CONFIG_MIPS=y
 
@@ -327,7 +327,7 @@ CONFIG_BLK_DEV_LOOP=y
 #
 CONFIG_INPUT=y
 # CONFIG_INPUT_FF_MEMLESS is not set
-# CONFIG_INPUT_POLLDEV is not set
+CONFIG_INPUT_POLLDEV=y
 
 #
 # Userland interfaces
@@ -512,7 +512,8 @@ CONFIG_FONT_MINI_4x6=y
 CONFIG_LOGO=y
 # CONFIG_LOGO_LINUX_MONO is not set
 # CONFIG_LOGO_LINUX_VGA16 is not set
-CONFIG_LOGO_LINUX_CLUT224=y
+# CONFIG_LOGO_LINUX_CLUT224 is not set
+CONFIG_LOGO_DINGUX_CLUT224=y
 
 #
 # Sound
