@@ -203,6 +203,7 @@
 #define GPIO_SD_CD		61	/* GPB29 */
 #define GPIO_USB_DETE		124	/* GPD28 */
 #define GPIO_BOOT_SELECT	113	/* GPD17 */
+#define GPIO_AUDIO_ENABLE	91	/* GPC27 */
 
 
 #endif	/* __CONFIG_H */
