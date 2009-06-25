@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2007 Ingenic Semiconductor Inc.
- * Author: Peter <jlwei@ingenic.cn>
+ * Copyright (C) 2009 Ignacio Garcia Perez
+ *
+ * Author:   Peter <jlwei@ingenic.cn>
+ * Modified: Ignacio Garcia Perez <iggarpe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -360,6 +363,12 @@ static void nand_init(void) {
 static void gpio_init(void)
 {
 	/*
+	 * Mute audio
+	 */
+	__gpio_as_output(GPIO_AUDIO_ENABLE);
+	__gpio_clear_pin(GPIO_AUDIO_ENABLE);
+
+	/*
 	 * Initialize SDRAM pins
 	 */
 #if defined(CONFIG_JZ4720)
@@ -383,35 +392,40 @@ static void gpio_init(void)
 
 void nand_boot(void)
 {
-	int boot_sel;
+	int i;
 
 	gpio_init();	/* Basic hardware initialization */
 	serial_init();
 
-	boot_sel = __gpio_get_pin(GPIO_BOOT_SELECT);
-
-	serial_puts("\nNAND Secondary Program Loader\n");
+	serial_puts("\nNAND SPL\n");
 
 	pll_init();	/* More hardware initialization */
 	sdram_init();
 	slcd_init();
 	nand_init();
 
-	/* Defaults for U-Boot image */
-	image_weird_ecc = 0;
-	image_offs = CFG_NAND_U_BOOT_OFFS;
-	image_size = CFG_NAND_U_BOOT_SIZE;
-	image_dst = (uchar *)CFG_NAND_U_BOOT_DST;
-	image_start = (image_start_t)CFG_NAND_U_BOOT_START;
+	/* Defaults for system loader */
+	image_weird_ecc = 1;
+	image_offs = 0x00040000;
+	image_size = 0x000C0000;
+	image_dst = (uchar *)0x80E00000;
+	image_start = (image_start_t)0x80E10008;
 
-	/* If boot selection key NOT PRESSED, boot system loader instead */
-	if (boot_sel) {
-		mdelay(1000);
-		image_weird_ecc = 1;
-		image_offs = 0x00040000;
-		image_size = 0x000C0000;
-		image_dst = (uchar *)0x80E00000;
-		image_start = (image_start_t)0x80E10008;
+	/* One second wait loop */
+	for (i = 0; i < 100; i++) {
+
+		/* If boot selection key is pressed at any time, 
+		 * configure for U-Boot loading and exit loop */
+		if (!__gpio_get_pin(GPIO_BOOT_SELECT)) {
+			image_weird_ecc = 0;
+			image_offs = CFG_NAND_U_BOOT_OFFS;
+			image_size = CFG_NAND_U_BOOT_SIZE;
+			image_dst = (uchar *)CFG_NAND_U_BOOT_DST;
+			image_start = (image_start_t)CFG_NAND_U_BOOT_START;
+			break;
+		}
+
+		mdelay(10);
 	}
 
 	nand_load();		/* Load image */

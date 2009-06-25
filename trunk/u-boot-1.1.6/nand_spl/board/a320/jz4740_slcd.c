@@ -2,7 +2,7 @@
  * jz4740_slcd.c -- Ingenic On-Chip SLCD simple setup
  *
  * Copyright (C) 2005-2007, Ingenic Semiconductor Inc.
- * Copyright (C) 2009,      Ignacio Garcia Perez <iggarpe@gmail.com>
+ * Copyright (C) 2009       Ignacio Garcia Perez <iggarpe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
