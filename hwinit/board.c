@@ -21,6 +21,11 @@ void gpio_init(void)
 
 int nf, pllout2;
 
+/* PLL output clock = EXTAL * NF / (NR * NO)
+ *
+ * NF = FD + 2, NR = RD + 2
+ * NO = 1 (if OD = 0), NO = 2 (if OD = 1 or 2), NO = 4 (if OD = 3)
+ */
 void pll_init(void)
 {
 	register unsigned int cfcr, plcr1;
@@ -29,18 +34,19 @@ void pll_init(void)
 		7, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0,
 		9
 	};
-//	int div[5] = {1, 4, 4, 4, 4}; /* divisors of I:S:P:L:M */
+	int div[5] = {1, 3, 3, 3, 3}; /* divisors of I:S:P:L:M */
 
 	cfcr = CPM_CPCCR_CLKOEN |
-		(n2FR[1] << CPM_CPCCR_CDIV_BIT) | 
-		(n2FR[PHM_DIV] << CPM_CPCCR_HDIV_BIT) | 
-		(n2FR[PHM_DIV] << CPM_CPCCR_PDIV_BIT) |
-		(n2FR[PHM_DIV] << CPM_CPCCR_MDIV_BIT) |
-		(n2FR[PHM_DIV] << CPM_CPCCR_LDIV_BIT);
+		CPM_CPCCR_PCS |
+		(n2FR[div[0]] << CPM_CPCCR_CDIV_BIT) | 
+		(n2FR[div[1]] << CPM_CPCCR_HDIV_BIT) | 
+		(n2FR[div[2]] << CPM_CPCCR_PDIV_BIT) |
+		(n2FR[div[3]] << CPM_CPCCR_MDIV_BIT) |
+		(n2FR[div[4]] << CPM_CPCCR_LDIV_BIT);
 
 	pllout2 = (cfcr & CPM_CPCCR_PCS) ? CFG_CPU_SPEED : (CFG_CPU_SPEED / 2);
 
-	/* Init UHC clock */
+	/* Init USB Host clock, pllout2 must be n*48MHz */
 	REG_CPM_UHCCDR = pllout2 / 48000000 - 1;
 
 	nf = CFG_CPU_SPEED * 2 / CFG_EXTAL;
@@ -53,7 +59,7 @@ void pll_init(void)
 	/* init PLL */
 	REG_CPM_CPCCR = cfcr;
 	REG_CPM_CPPCR = plcr1;
-} 
+}
 
 void sdram_init(void)
 {
