@@ -282,12 +282,6 @@ static void nand_load(int offs, int size, unsigned char *dst)
 	int page;
 	int pagecopy_count;
 
-	serial_puts("nand_load: ");
-	serial_puts("offs="); serial_puth(offs); serial_putc(' ');
-	serial_puts("size="); serial_puth(size); serial_putc(' ');
-	serial_puts("dst="); serial_puth(dst); serial_putc(' ');
-	serial_putc('\n');
-
 	__nand_enable();
 
 	page = offs / page_size;
@@ -295,17 +289,11 @@ static void nand_load(int offs, int size, unsigned char *dst)
 
 	while (pagecopy_count < (size / page_size)) {
 
-		serial_puts("nand_load: ");
-		serial_puts("page="); serial_puth(page); serial_putc(' ');
-		serial_puts("dst="); serial_puth(dst); serial_putc(' ');
-		serial_putc('\n');
-
 		if (page % page_per_block == 0) {
 		
 			nand_read_oob(page + bad_block_page, oob_buf, oob_size);
 			if (oob_buf[bad_block_pos] != 0xff) {
 
-				serial_puts("nand_load: skipping entire block\n");
 				page += page_per_block;
 				continue;
 			}
@@ -313,10 +301,6 @@ static void nand_load(int offs, int size, unsigned char *dst)
 
 		/* Load this page to dst, do the ECC */
 		nand_read_page(page, dst, oob_buf);
-
-		serial_puts("nand_load: data=");
-		serial_puth(*(unsigned long *)dst);
-		serial_putc('\n');
 
 		dst += page_size;
 		page++;
@@ -349,6 +333,6 @@ void nand_boot(void)
 	oob_size = page_size / 32;
 	ecc_count = page_size / ECC_BLOCK;
 
-	nand_load(0x00000000, 0x00002000, 0x80100000);
+	nand_load(0x00000000, 0x00002000, (unsigned char  *)0x80100000);
 }
 
