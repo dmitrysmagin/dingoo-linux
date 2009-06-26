@@ -42,8 +42,13 @@ void pll_init(void)
 	int div[5] = {1, 3, 3, 3, 3}; /* divisors of I:S:P:L:M */
 	int nf, pllout2;
 
+	/*
+	 * The original A320 firmware messes up the LCD and USB clocks
+	 * if set direct PLL clock output. It must be not set so the
+	 * PLL output is divided by two.
+	 */
 	cfcr = CPM_CPCCR_CLKOEN |
-		CPM_CPCCR_PCS |
+		/* CPM_CPCCR_PCS | */
 		(n2FR[div[0]] << CPM_CPCCR_CDIV_BIT) | 
 		(n2FR[div[1]] << CPM_CPCCR_HDIV_BIT) | 
 		(n2FR[div[2]] << CPM_CPCCR_PDIV_BIT) |
