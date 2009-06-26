@@ -117,6 +117,7 @@ extern void serial_puts(const char *s);
 extern void sdram_init(void);
 extern void pll_init(void);
 extern void slcd_init(void);
+extern void mdelay(unsigned int ms);
 
 /*
  * NAND flash routines
