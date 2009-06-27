@@ -117,6 +117,7 @@ extern void serial_puts(const char *s);
 extern void sdram_init(void);
 extern void pll_init(void);
 extern void slcd_init(void);
+extern void slcd_off(void);
 extern void mdelay(unsigned int ms);
 
 /*
@@ -382,8 +383,14 @@ static void gpio_init(void)
 
 	/*
 	 * Initialize UART0 pins
+	 *
+	 * IMPORTANT: __gpio_as_uart0() disables the pull-ups,
+	 * and we neet to keep them enabled to avoid spurious
+	 * detection of break condition when user does not have
+	 * a the serial port connected.
 	 */
-	__gpio_as_uart0();
+	REG_GPIO_PXFUNS(3) = 0x06000000;
+	REG_GPIO_PXSELS(3) = 0x06000000;
 
 	/*
 	 * Initialize NAND pins
@@ -429,8 +436,11 @@ void nand_boot(void)
 		mdelay(10);
 	}
 
-	nand_load();		/* Load image */
-	flush_cache_all();	/* Flush caches */
-	(*image_start)(0);	/* Jump to image */
+	nand_load();				/* Load image */
+	flush_cache_all();			/* Flush caches */
+
+	if (image_weird_ecc) slcd_off();	/* Switch LCD off if system loader */
+						/* (leave it on for U-Boot/linux */
+	(*image_start)(0);
 }
 
