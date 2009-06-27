@@ -93,7 +93,7 @@ struct jzfb_info {
 static struct jzfb_info jzfb = {
 #if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331)
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
-	320, 240, 16, 16, 16000000	/*16 bpp, 16 bus */
+	320, 240, 16, 16, 16800000	/*16 bpp, 16 bus */
 #endif
 #ifdef CONFIG_JZ_SLCD_LGDP4551
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
@@ -996,13 +996,14 @@ void slcd_hw_init(void)
 
 	jz_clocks.pixclk = __cpm_get_pixclk();
 	jz_clocks.lcdclk = __cpm_get_lcdclk();
-	printk("SLCDC: PixClock:%d LcdClock:%d\n",
-	       jz_clocks.pixclk, jz_clocks.lcdclk);
+	printk("SLCDC: PixClock:%d LcdClock:%d val:%d\n",
+	       jz_clocks.pixclk, jz_clocks.lcdclk, val);
 
 	__cpm_start_lcd();
 	udelay(1000);
+
 	__slcd_display_pin_init();
- 	__slcd_special_on();
+ 	__slcd_special_on();			/* so startup glitch is not visible */
 
 	/* Configure SLCD module for transfer data to smart lcd GRAM*/
 	switch (jzfb.bus) {
@@ -1282,6 +1283,12 @@ static int __init jzslcd_fb_init(void)
 	if (err)
 		goto failed;
 	jzfb_set_var(&cfb->fb.var, -1, &cfb->fb);
+
+	/* Make sure backlight is off before initializing the
+	 * display, because the boot process may have left it
+	 * on showing a splash screen, and if we don't turn
+	 * backlight off the initialization glitch will be visible */
+	__slcd_close_backlight(); mdelay(10);
 
 	slcd_hw_init();
 
