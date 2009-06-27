@@ -261,6 +261,8 @@ static void slcd_hw_init (void)
 	mdelay(10);
 
 	/* Initialize LCD GPIO pins */
+	__gpio_as_output(PIN_BKLIGHT);
+	__gpio_clear_pin(PIN_BKLIGHT);
 	__gpio_as_output(PIN_RS_N);
 	__gpio_set_pin(PIN_RS_N);
 	__gpio_as_output(PIN_CS_N);
@@ -276,6 +278,12 @@ static void slcd_hw_init (void)
 	/* Configure SLCD module for transfer data to smart LCD GRAM*/
 	REG_SLCD_CFG &= ~SLCD_CFG_DWIDTH_MASK;
 	REG_SLCD_CFG |= SLCD_CFG_DWIDTH_16;
+}
+
+void slcd_off (void)
+{
+	__gpio_clear_pin(PIN_BKLIGHT); mdelay(10);
+	__gpio_clear_pin(PIN_RESET_N);
 }
 
 void slcd_init (void)
@@ -296,9 +304,9 @@ void slcd_init (void)
 		slcd_data_write((r << 11) | (g << 6) | b);
 	}
 
-	/* Enable backlight */
-	__gpio_as_output(PIN_BKLIGHT);
-	__gpio_set_pin(PIN_BKLIGHT);
+	mdelay(10);
+
+	__gpio_set_pin(PIN_BKLIGHT);	/* Enable backlight */
 }
 
 #endif /* CONFIG_JZ_SLCD */
