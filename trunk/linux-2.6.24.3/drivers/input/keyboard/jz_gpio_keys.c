@@ -124,9 +124,8 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 					handle_sysrq(jz_button[i].sysrq, NULL);
 			}
 
-			/* Update current button state and STOP power button counter*/
-			kbd->sysrq_state = s;
-			kbd->power_count = 0;
+			kbd->power_count = 0;	/* Stop power slider pressed counter */
+			kbd->sysrq_state = s;	/* Update current sysrq button state */
 		}
 
 		else
@@ -145,9 +144,6 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 				}
 			}
 		
-			/* Update current button state */
-			kbd->special_state = s;
-
 			/* If power state just pressed, start counter, otherwise increase it */
 			if (!kbd->power_state) kbd->power_count = 1;
 			else {
@@ -165,8 +161,9 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 				}
 			}
 
-			/* But force counter stopped if any button is pressed */
-			if (s) kbd->power_count = 0;
+			if (s) kbd->power_count = 0;	/* If any button pressed, stop counter */
+			kbd->special_state = s;		/* Update current special button state */
+			kbd->power_state = p;		/* Update power slider state */
 		}
 	}
 
@@ -184,13 +181,10 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 			}
 		}
 
-		/* Update current button state and STOP power button counter */
-		kbd->normal_state = s;
-		kbd->power_count = 0;
+		kbd->power_count = 0;	/* Stop power slider pressed counter */
+		kbd->normal_state = s;	/* Update current normal button state */
+		kbd->power_state = p;	/* Update power slider state */
 	}
-
-	/* Update power slider state */
-	kbd->power_state = p;
 
 	/* Synchronize input if any keycodes sent */
 	if (sync) input_sync(input);
