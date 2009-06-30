@@ -530,6 +530,10 @@ void sub_shc_draw(SDL_Surface * screen)
 
 void sub_shc_handle_input(unsigned int button)
 {
+	int outro = 0;
+
+    config_lookup_bool(&CONFIG, "outro", &outro);
+
     switch (button)
     {
     case GP2X_BUTTON_B:
@@ -644,7 +648,7 @@ void sub_shc_handle_input(unsigned int button)
             {
                 char *dir_name = (char *) calloc(1, 1024);
 
-                if (config_lookup_bool(&CONFIG, "outro"))
+                if (outro)
                     gfx_draw_outro(SDL_GetVideoSurface());
 
                 gp2xmb_deinit();

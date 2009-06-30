@@ -203,6 +203,9 @@ void *photo_thread_browse(void *arg)
     struct dirent **namelist;
     int files = 0;
     unsigned typeloop = 0, i = 0;
+	int photopreview = 0;
+
+	config_lookup_bool(&CONFIG, "photopreview", &photopreview);
 
 	xmb_activateFlag(XMB_SYNC);
 
@@ -302,7 +305,7 @@ void *photo_thread_browse(void *arg)
     pthread_mutex_unlock(&photo_lock);
 
 
-	if (config_lookup_bool(&CONFIG, "photopreview"))
+	if (photopreview)
 	{
 		tlistitem *pcurr = NULL;
 		SDL_Surface *icon = NULL;

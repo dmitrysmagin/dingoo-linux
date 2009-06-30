@@ -50,12 +50,12 @@ int stereodevs;
 
 int volflags = 0;
 int time_switchoff = 0;
-int volume = 0;                 /* default volume */
+long volume = 0;                /* default volume */
 SDL_Surface *volume_meter = NULL;
 
 int volume_init(void)
 {
-	volume = config_lookup_int(&CONFIG,"volume");
+	config_lookup_int(&CONFIG, "volume", &volume);
     volume_set(volume);
     volume_meter = gfx_load_image("images/icons/volume_control.png", 1);
     return 0;
