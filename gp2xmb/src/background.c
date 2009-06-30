@@ -65,7 +65,6 @@ const char *background_names[10] = { "Orange", "Midnightblue",
     "Red", "Black"
 };
 
-long bgtheme = 0;
 int bg_usewallpaper = 0;
 int offset_time = 0;
 
@@ -110,6 +109,8 @@ int bg_init(void)
 #ifdef GFXOPENGL
 
 #else
+    long bgtheme = -1;
+
 	srandom(time(NULL));
 
     sin_build_lut();
@@ -163,7 +164,7 @@ int bg_init(void)
     ganim[1].posy = 240 - gradient[1]->h - 54;
     ganim[1].img = gradient[1];
 
-    config_lookup_bool(&CONFIG, "usewallpaper", &bg_usewallpaper);
+    config_lookup_bool(&CONFIG, "usewallpaper", &bg_usewallpaper);;
 
 	offset_time = random() % 20000;
 

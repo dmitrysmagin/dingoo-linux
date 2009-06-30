@@ -360,10 +360,6 @@ void sub_game_draw(SDL_Surface * screen)
 
 void sub_game_handle_input(unsigned int button)
 {
-	int outro = 0;
-
-	config_lookup_bool(&CONFIG, "outro", &outro);
-
     switch (button)
     {
     case GP2X_BUTTON_L:
@@ -499,6 +495,9 @@ void sub_game_handle_input(unsigned int button)
                     if (item)
                     {
                         char *dir_name = (char *) calloc(1, 1024);
+						int outro = 0;
+
+                        config_lookup_bool(&CONFIG, "outro", &outro);
 
                         if (outro)
                             gfx_draw_outro(SDL_GetVideoSurface());

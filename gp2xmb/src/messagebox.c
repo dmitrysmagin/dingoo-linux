@@ -62,6 +62,7 @@ void *msgbox_draw(void *argv);
 int msgbox(SDL_Surface * screen, SDL_Surface *icon, const char* title, const char *message, enum msgbtype type)
 {
 	SDL_Surface *msgb_buttons = NULL;
+
     msgb_surft = screen;
     msgb_type = type;
     msgb_done = 0;
@@ -127,10 +128,10 @@ void *msgbox_draw(void *argv)
     SDL_Event event;
 	int swapXB = 0;
 
+	config_lookup_bool(&CONFIG, "swapXB", &swapXB);
+
     char *sX = NULL;
     char *sB = NULL;
-
-	config_lookup_bool(&CONFIG, "swapXB", &swapXB);
 
     bg = gfx_new_surface(msgb_surft->w, msgb_surft->h, 1);
 

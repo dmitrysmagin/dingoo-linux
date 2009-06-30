@@ -48,11 +48,11 @@ void (*popup_origfptr) (int) = NULL;
 
 int POPUP_init()
 {
-    t_rgb color;
-    int colormax = 0;
 	long bgtheme = 0;
+    int colormax = 0;
+    t_rgb color;
 
-	config_lookup_int(&CONFIG, "bgtheme", &bgtheme);
+    config_lookup_int(&CONFIG, "bgtheme", &bgtheme);
 
     color = background_themes[bgtheme];
 
