@@ -1,0 +1,2 @@
+ * Images larger than 3.1 Megapixels (QXGA: 2048*1536) takes up a lot of memory
+   when loaded, and GP2XMB could run out of memory and crash due to this.

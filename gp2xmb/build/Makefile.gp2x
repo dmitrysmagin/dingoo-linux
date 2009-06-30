@@ -1,0 +1,63 @@
+CHAINPREFIX=/usr/local/gp2xdev
+CROSS_COMPILE=$(CHAINPREFIX)/bin/gp2x-
+
+CC= $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+STRIP = $(CROSS_COMPILE)strip
+
+CFLAGS = -I"$(CHAINPREFIX)/include" `$(CHAINPREFIX)/bin/gp2x-sdl-config --cflags` -DTARGET_GP2X -g -O3 -Wno-unused -msoft-float -fomit-frame-pointer -ffast-math -funroll-loops
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = -static -L$(CHAINPREFIX)/lib `$(CHAINPREFIX)/bin/gp2x-sdl-config --libs` -lSDL_image -lSDL_gfx -lSDL_mixer -ljpeg -lsmpeg -lSDL -lpng12 -lmad -lid3tag -lz -lconfig
+
+TREMOR_C= -DTREMOR
+TREMOR_LD= -lvorbisidec
+
+VORBIS_C= -DVORBIS
+VORBIS_LD= -lvorbisfile -lvorbis -logg
+
+TARGET = gp2xmb.gpe
+OBJS = gp2xmb.o \
+	   mediabar.o \
+	   gfx.o \
+	   sfx.o \
+	   SFont.o \
+	   batterymon.o \
+	   sub_game.o \
+	   sub_photo.o \
+	   sub_settings.o \
+	   sub_shortcuts.o \
+	   settings_cb.o \
+	   img_manager.o \
+	   gp2x.o \
+	   volumecontrol.o \
+	   itemlist.o \
+	   sub_music.o \
+	   vorbis_player.o \
+	   mp3_player.o \
+	   background.o \
+	   configuration.o \
+	   progressbar.o \
+	   popup.o \
+	   messagebox.o \
+	   utils.o \
+	   splash.o \
+	   scripts.o
+
+
+%.o: ../src/%.cpp
+		$(CXX) $(CFLAGS) $(TREMOR_C) -c $<
+
+%.o: ../src/%.c
+		@echo "[CC] $<"
+		@$(CC) $(CFLAGS) $(TREMOR_C) -c $<
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+		@echo "Linking $(TARGET) ..."
+		@$(CXX) -o $(TARGET)-debug $(OBJS) $(TREMOR_LD) $(LDFLAGS)
+		$(STRIP) $(TARGET)-debug -o $(TARGET)
+
+clean:
+		rm -f *.o *~
+		rm -f $(TARGET) $(TARGET)-debug
