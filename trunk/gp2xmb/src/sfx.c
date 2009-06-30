@@ -79,7 +79,8 @@ void sfx_play(enum sfxfile file)
 
     config_lookup_bool(&CONFIG, "soundfx", &soundfx);
 
-	if (!soundfx) return;
+    if (!soundfx)
+        return;
 
     switch (file)
     {

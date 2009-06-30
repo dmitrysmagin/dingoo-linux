@@ -106,15 +106,12 @@ int main(int argc, char *argv[])
     SDL_Event event;
     int mainloop = 1;
     unsigned int i = 0;
-	int swapXB = 0;
 #ifdef FPSCOUNTER
     int fpscount = 0;
     int fpsclock = 0;
     char fpsstr[10];
     memset(fpsstr, 0, sizeof(fpsstr));
 #endif
-
-    config_lookup_bool(&CONFIG, "swapXB", &swapXB);
 
     getcwd(initpath, 1023);
 
@@ -261,7 +258,11 @@ int main(int argc, char *argv[])
                 {
                     if (keys[i].func)
                     {
-                        if (swapXB && (GP2X_BUTTON_X == i || GP2X_BUTTON_B == i))
+						int swapXB = 0;
+
+                        config_lookup_bool(&CONFIG, "swapXB", &swapXB);
+
+						if (swapXB && (GP2X_BUTTON_X == i || GP2X_BUTTON_B == i))
                         {
                             if (GP2X_BUTTON_X == i)
                                 keys[GP2X_BUTTON_B].func();

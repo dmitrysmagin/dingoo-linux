@@ -80,15 +80,15 @@ void sub_settings_draw(SDL_Surface * screen)
 {
 	int photopreview = 0;
 	long bgtheme = 0;
-	int bg_usewallpaper = 0;
+	int usewallpaper = 0;
 	int swapXB = 0;
 	long defaultmenu = 0;
 	int outro = 0;
 	int soundfx = 0;
 
-	config_lookup_bool(&CONFIG, "photopreview", &photopreview);
+    config_lookup_bool(&CONFIG, "photopreview", &photopreview);
     config_lookup_int(&CONFIG, "bgtheme", &bgtheme);
-    config_lookup_bool(&CONFIG, "usewallpaper", &bg_usewallpaper);
+    config_lookup_bool(&CONFIG, "usewallpaper", &usewallpaper);
     config_lookup_bool(&CONFIG, "swapXB", &swapXB);
     config_lookup_int(&CONFIG, "defaultmenu", &defaultmenu);
     config_lookup_bool(&CONFIG, "outro", &outro);
@@ -325,13 +325,13 @@ void sub_settings_draw(SDL_Surface * screen)
                     break;
                 case 3:        /* Wallpaper */
                     {
-                        POPUP_setrevert(callback_wallpaper, !bg_usewallpaper);
+                        POPUP_setrevert(callback_wallpaper, !usewallpaper);
 
                         POPUP_add(NULL, "Use", callback_wallpaper, 0);
                         POPUP_add(NULL, "Do Not Use", callback_wallpaper,
                                   1);
 
-                        POPUP_setselected(!bg_usewallpaper);
+                        POPUP_setselected(!usewallpaper);
                     }
                     break;
                 }

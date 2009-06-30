@@ -45,7 +45,7 @@ SFont_Font *font_monospace = NULL;
 /* Pictures */
 SDL_Surface *pic_line = NULL;
 
-long selected = 0;              /* current selected item in X dir */
+long selected = -1;             /* current selected item in X dir */
 int menumove_offset_x;          /* used for level 1 */
 int menumove_offset_y;          /* used for level 2 */
 short menumovedir;              /* 0=still,1=right,-1=left,2=down,-2=up */
@@ -68,7 +68,7 @@ void firmware_execute(struct submenu *self)
 
     config_lookup_bool(&CONFIG, "outro", &outro);
 
-    if (outro)
+	if (outro)
         gfx_draw_outro(SDL_GetVideoSurface());
 
     gp2xmb_deinit();
