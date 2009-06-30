@@ -1,0 +1,39 @@
+
+ gp2xmb - A Cross Media Bar for the GP2X
+ Copyright (C) 2007 Mikael Ganehag Brorsson
+
+===============================================================================
+
+INTRODUCTION
+
+  `GP2XMB' is an alternative launcher for the GP2X, with the same visual
+  layout as the Sony Cross Media Bar.
+
+  GP2XMB is currently under heavy development and you are encouraged to try
+  out the latest version and come with new suggestions and patches to improve
+  the quality of the software.
+
+  The following features should be included in GP2XMB in the future:
+
+    - Game Launcher (Divided into a shortcut lanucher and a browser)
+    - Photo Viewer (Close to finished, only minor things and bugs left)
+    - Music Player (A simple Vorbis player, libmad support in the future)
+    - Video Player (Pre-design, Currently uses the internal player)
+    - Settings Menu (Various settings implemented)
+
+===============================================================================
+
+INSTALLATION
+
+  Installing GP2XMB is fairly straight forward.
+
+    - unpack the binary release to a directory
+    - create a new folder (gp2xmb) anywhere on your SD memory stick
+    - copy the file `gp2xmb.gpe' from the unpacked directory to this folder
+    - copy the directory `images' from the unpacked directory to this folder
+    - copy the directory `sound' from the unpacked directory to this folder
+
+  Then launch the application from your current launcher.
+
+===============================================================================
+

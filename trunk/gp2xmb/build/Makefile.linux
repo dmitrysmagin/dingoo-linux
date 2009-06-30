@@ -1,0 +1,63 @@
+CC=gcc
+CXX=g++
+STRIP=strip
+CFLAGS = `sdl-config --cflags` -Wall -g -pedantic
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = `sdl-config --libs` -lSDL_image -lSDL_gfx -lSDL_mixer -lmad -lid3tag -lm -lconfig  -lpng12
+
+#GCOV = -fprofile-arcs -ftest-coverage -lgcov
+
+TREMOR_C= -DTREMOR
+TREMOR_LD= -lvorbisidec
+
+VORBIS_C= -DVORBIS
+VORBIS_LD= -lvorbis -lvorbisfile
+
+TARGET = gp2xmb
+OBJS = gp2xmb.o \
+           mediabar.o \
+           gfx.o \
+           sfx.o \
+           SFont.o \
+           batterymon.o \
+           sub_game.o \
+           sub_photo.o \
+           sub_settings.o \
+           sub_shortcuts.o \
+           settings_cb.o \
+           img_manager.o \
+           gp2x.o \
+           volumecontrol.o \
+           itemlist.o \
+           sub_music.o \
+           vorbis_player.o \
+           mp3_player.o \
+           background.o \
+           configuration.o \
+           progressbar.o \
+           popup.o \
+           messagebox.o \
+           utils.o \
+		   splash.o \
+		   scripts.o
+
+%.o: ../src/%.cpp
+	$(CXX) $(CFLAGS) $(TREMOR_C) -c $<
+
+%.o: ../src/%.c
+	@echo "[CC] $<"
+	@$(CC) $(CFLAGS) $(TREMOR_C) -c $<
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@echo "Linking $(TARGET) ..."
+	$(CXX) -o $(TARGET) $(OBJS) $(LDFLAGS) $(TREMOR_LD)
+
+clean:
+	rm -f *.o *~
+	rm -f $(TARGET)
+
+nice:
+	indent -kr -nce -ncdw -bl -bli0 -bls -nut ../src/*.c ../src/*.h
+
