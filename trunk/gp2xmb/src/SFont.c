@@ -28,6 +28,7 @@
 */
 
 #include <SDL.h>
+#include <SDL_gfxBlitFunc.h>
 
 #include <assert.h>
 #include <stdlib.h>

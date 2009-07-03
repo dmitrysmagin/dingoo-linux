@@ -109,7 +109,7 @@ int bg_init(void)
 #ifdef GFXOPENGL
 
 #else
-    long bgtheme = -1;
+    int bgtheme;
 
 	srandom(time(NULL));
 
@@ -117,7 +117,7 @@ int bg_init(void)
 
     pthread_mutex_init(&m_lock, NULL);
 
-    config_lookup_int(&CONFIG, "bgtheme", &bgtheme);
+    bgtheme = config_lookup_int(&CONFIG, "bgtheme");
 
     if (bgtheme >= 0
         && bgtheme < (sizeof(background_themes) / sizeof(t_rgb)))
@@ -164,7 +164,7 @@ int bg_init(void)
     ganim[1].posy = 240 - gradient[1]->h - 54;
     ganim[1].img = gradient[1];
 
-    config_lookup_bool(&CONFIG, "usewallpaper", &bg_usewallpaper);;
+    bg_usewallpaper = config_lookup_bool(&CONFIG, "usewallpaper");;
 
 	offset_time = random() % 20000;
 
@@ -175,9 +175,7 @@ int bg_init(void)
 
 void bg_load_wallpaper()
 {
-    const char *wallpaper = NULL;
-
-	config_lookup_string(&CONFIG, "wallpaper", &wallpaper);
+    const char *wallpaper = config_lookup_string(&CONFIG, "wallpaper");
 
     if (background)
     {
