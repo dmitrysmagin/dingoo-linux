@@ -495,11 +495,8 @@ void sub_game_handle_input(unsigned int button)
                     if (item)
                     {
                         char *dir_name = (char *) calloc(1, 1024);
-						int outro = 0;
 
-                        config_lookup_bool(&CONFIG, "outro", &outro);
-
-                        if (outro)
+                        if (config_lookup_bool(&CONFIG, "outro"))
                             gfx_draw_outro(SDL_GetVideoSurface());
 
 						gp2xmb_deinit();

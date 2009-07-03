@@ -62,7 +62,6 @@ void *msgbox_draw(void *argv);
 int msgbox(SDL_Surface * screen, SDL_Surface *icon, const char* title, const char *message, enum msgbtype type)
 {
 	SDL_Surface *msgb_buttons = NULL;
-
     msgb_surft = screen;
     msgb_type = type;
     msgb_done = 0;
@@ -126,9 +125,6 @@ void *msgbox_draw(void *argv)
 {
     SDL_Surface *bg = NULL;
     SDL_Event event;
-	int swapXB = 0;
-
-	config_lookup_bool(&CONFIG, "swapXB", &swapXB);
 
     char *sX = NULL;
     char *sB = NULL;
@@ -200,7 +196,7 @@ void *msgbox_draw(void *argv)
 		{
 			int pX = (msgb_surft->w/2)-((MSGBUTTON_SPACING/2)+ msgb_buttonX->w + 5 + gfx_text_width(font_small,sX));
 			int pY = ((30-msgb_buttonX->h)/2) + msgb_surft->h - 30;
-			gfx_draw_image(swapXB ?
+			gfx_draw_image(config_lookup_bool(&CONFIG, "swapXB") ?
 						   msgb_buttonB : msgb_buttonX,pX, pY, msgb_surft);
 
 			pX += msgb_buttonX->w + 5;
@@ -212,7 +208,7 @@ void *msgbox_draw(void *argv)
 		{
 			int pX = (msgb_surft->w/2)+(MSGBUTTON_SPACING/2);
 			int pY = ((30-msgb_buttonB->h)/2) + msgb_surft->h - 30;
-			gfx_draw_image(swapXB ?
+			gfx_draw_image(config_lookup_bool(&CONFIG, "swapXB") ?
 						   msgb_buttonX : msgb_buttonB, pX, pY,
 						   msgb_surft);
 
@@ -235,14 +231,14 @@ void *msgbox_draw(void *argv)
 
 				case SDLK_BACKSPACE:
 				case SDLK_ESCAPE:
-					if(sB || (swapXB && sX))
+					if(sB || (config_lookup_bool(&CONFIG, "swapXB") && sX))
 					{
                     	msgb_done = 1;
                     }
 					break;
 
                 case SDLK_RETURN:
-                    if(sX || (swapXB && sB))
+                    if(sX || (config_lookup_bool(&CONFIG, "swapXB") && sB))
 					{
                     	msgb_done = 1;
                     }
@@ -263,14 +259,14 @@ void *msgbox_draw(void *argv)
                     break;
 
 				case GP2X_BUTTON_B:
-					if(sB || (swapXB && sX))
+					if(sB || (config_lookup_bool(&CONFIG, "swapXB") && sX))
 					{
                     	msgb_done = 1;
                     }
 					break;
 
                 case GP2X_BUTTON_X:
-					if(sX || (swapXB && sB))
+					if(sX || (config_lookup_bool(&CONFIG, "swapXB") && sB))
 					{
                     	msgb_done = 1;
                     }

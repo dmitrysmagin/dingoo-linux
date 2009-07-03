@@ -45,7 +45,7 @@ SFont_Font *font_monospace = NULL;
 /* Pictures */
 SDL_Surface *pic_line = NULL;
 
-long selected = -1;             /* current selected item in X dir */
+short selected;                 /* current selected item in X dir */
 int menumove_offset_x;          /* used for level 1 */
 int menumove_offset_y;          /* used for level 2 */
 short menumovedir;              /* 0=still,1=right,-1=left,2=down,-2=up */
@@ -61,14 +61,11 @@ void firmware_execute(struct submenu *self)
 {
     char ctmp[1024];
     char *dir_name = NULL;
-	int outro = 0;
 
     memset(ctmp, 0, sizeof(ctmp));
     strncpy(ctmp, self->extra, sizeof(ctmp) - 1);
 
-    config_lookup_bool(&CONFIG, "outro", &outro);
-
-	if (outro)
+    if (config_lookup_bool(&CONFIG, "outro"))
         gfx_draw_outro(SDL_GetVideoSurface());
 
     gp2xmb_deinit();
@@ -400,7 +397,7 @@ int xmb_init(void)
 
     /* xmb_add(NULL,"network","Network",NULL); */
 
-    config_lookup_int(&CONFIG, "defaultmenu", &selected);
+    selected = config_lookup_int(&CONFIG, "defaultmenu");
 
     if (selected < 0)
         selected = 0;

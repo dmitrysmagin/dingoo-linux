@@ -32,16 +32,12 @@ Mix_Chunk *sfx_intro = NULL;
 
 void sfx_init(void)
 {
-	int soundfx = 0;
-
-    config_lookup_bool(&CONFIG, "soundfx", &soundfx);
-
 	sfx_intro = Mix_LoadWAV("sound/xmb_load.wav");
     if (!sfx_intro)
     {
         printf("Mix_LoadWAV: %s\n", Mix_GetError());
     }
-    else if(soundfx)
+    else if(config_lookup_bool(&CONFIG, "soundfx"))
     	Mix_PlayChannel(-1, sfx_intro, 0);
 
     /* Load sound effects */
@@ -75,11 +71,7 @@ void sfx_init(void)
 
 void sfx_play(enum sfxfile file)
 {
-	int soundfx = 0;
-
-    config_lookup_bool(&CONFIG, "soundfx", &soundfx);
-
-    if (!soundfx)
+    if (!config_lookup_bool(&CONFIG, "soundfx"))
         return;
 
     switch (file)
