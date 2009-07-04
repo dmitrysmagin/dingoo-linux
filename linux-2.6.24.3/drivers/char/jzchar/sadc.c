@@ -4,6 +4,7 @@
  * SAR-ADC driver for JZ4740.
  *
  * Copyright (C) 2006  Ingenic Semiconductor Inc.
+ * Copyright (C) 2009  Ignacio Garcia Perez <iggarpe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +43,6 @@ MODULE_DESCRIPTION("JZ4740 SADC driver");
 MODULE_LICENSE("GPL");
 
 #define SADC_NAME        "sadc"
-static DECLARE_WAIT_QUEUE_HEAD (sadc_wait_queue);
 
 struct sadc_device {
 	int mode;
@@ -52,6 +52,11 @@ struct sadc_device {
 };
 
 static struct sadc_device *sadc_dev;
+
+extern unsigned int (*codec_read_battery)(void);
+
+#ifdef CONFIG_JZ_TPANEL_SADC
+static DECLARE_WAIT_QUEUE_HEAD (sadc_wait_queue);
 
 static int samples = 3; /* we sample 3 every time */
 static int first_time = 0;
@@ -66,7 +71,7 @@ typedef struct datasource {
 static datasource_t data_s;
 static unsigned int p;
 static unsigned int old_x, old_y;
-extern unsigned int (*codec_read_battery)(void);
+#endif
 
 /* 
  * set adc clock to 12MHz/div. A/D works at freq between 500KHz to 6MHz.
@@ -101,6 +106,7 @@ void start_pbat_adc(void)
   	REG_SADC_ENA |= SADC_ENA_PBATEN;      /* Enable pbat adc */
 }
 
+#ifdef CONFIG_JZ_TPANEL_SADC
 void start_ts_adc(void)
 {
 	REG_SADC_SAMETIME = 10;  /* about 0.1 ms,you can change it */
@@ -134,6 +140,7 @@ static int  jz4740_adc_read(struct jz_ts_t *ts)
   	REG_SADC_STATE &= ~SADC_STATE_TSRDY;
 	return 0;
 }
+#endif
 
 /*------------------------------------------------------------
  * Read the battery voltage
@@ -158,6 +165,7 @@ unsigned int jz4740_read_battery(void)
 
 /*------------------ Calibrate samples -------------------*/
 
+#ifdef CONFIG_JZ_TPANEL_SADC
 #define DIFF(a,b) (((a)>(b))?((a)-(b)):((b)-(a)))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
@@ -320,6 +328,7 @@ static unsigned long transform_to_screen_y(struct jz_ts_t *ts, unsigned long y)
 		return (y - TSMINY) * SCREEN_Y / (TSMAXY - TSMINY);
 	}
 }
+#endif
 
 /*
  * File operations
@@ -374,6 +383,7 @@ static int sadc_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, 
 
 /*------------------ Common routines -------------------*/
 
+#ifdef CONFIG_JZ_TPANEL_SADC
 void ts_enable_irq(void)
 {
 	REG_SADC_CTRL &= ~SADC_CTRL_PENDM;
@@ -540,6 +550,7 @@ int AcquireEvent(struct jz_ts_t *ts, struct ts_event *event)
 	}
 	return 0;
 }
+#endif
 
 /*
  * Module init and exit
@@ -560,7 +571,10 @@ static int __init sadc_init(void)
 		return ret;
 	}
 
+#ifdef CONFIG_JZ_TPANEL_SADC
 	codec_read_battery = jz4740_read_battery;
+#endif
+
 	sadc_init_clock(3);
 
 	printk("JZ4740 SAR-ADC driver registered\n");
