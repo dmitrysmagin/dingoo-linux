@@ -29,11 +29,12 @@ config JZ_TPANEL
 choice
 	prompt "Touch Panel ADC type"
 	depends on JZ_TPANEL
-	default JZ_SADC if SOC_JZ4740 || SOC_JZ4750 || SOC_JZ4750D
+	default JZ_TPANEL_SADC if SOC_JZ4740 || SOC_JZ4750 || SOC_JZ4750D
 	default JZ_TPANEL_AK4182 if SOC_JZ4730
 
-config JZ_SADC
+config JZ_TPANEL_SADC
 	bool 'Select the JZ47XX internal SADC'
+	select JZ_SADC
 
 config JZ_TPANEL_AK4182
 	bool 'Select the AK4182 codec'
@@ -45,6 +46,10 @@ config JZ_TPANEL_WM9712
 	bool 'Select the WM9712 codec'
 
 endchoice
+
+config JZ_SADC
+	tristate 'JZ SADC driver support'
+	depends on JZCHAR
 
 config JZ_UDC_HOTPLUG
 	tristate 'JZ UDC hotplug driver support'
