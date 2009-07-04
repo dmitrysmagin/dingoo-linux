@@ -50,10 +50,10 @@ static const struct {
 	{ .gpio = 97,	.actlow = 1,	.ncode = KEY_LEFTALT,							}, /* B button */
 	{ .gpio = 115,	.actlow = 1,	.ncode = KEY_SPACE,							}, /* X button */
 	{ .gpio = 98,	.actlow = 1,	.ncode = KEY_LEFTSHIFT,							}, /* Y button */
-	{ .gpio = 110,	.actlow = 1,	.ncode = KEY_TAB,							}, /* Left shoulder button */
+	{ .gpio = 110,	.actlow = 1,	.ncode = KEY_TAB,	.scode = KEY_EXIT				}, /* Left shoulder button */
 	{ .gpio = 111,	.actlow = 1,	.ncode = KEY_BACKSPACE,							}, /* Right shoulder button */
 	{ .gpio = 81,	.actlow = 1,	.ncode = KEY_ENTER,							}, /* START button */
-	{ .gpio = 113,	.actlow = 1,	.ncode = KEY_ESC,	.scode = KEY_KEYBOARD,		.sysrq = 'b'	}, /* SELECT button */
+	{ .gpio = 113,	.actlow = 1,	.ncode = KEY_ESC,	.scode = KEY_MENU,		.sysrq = 'b'	}, /* SELECT button */
 
 #define GPIO_POWER		(125)	/* Power slider */
 #define GPIO_POWER_ACTLOW	1
