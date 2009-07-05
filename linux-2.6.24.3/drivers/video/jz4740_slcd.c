@@ -23,6 +23,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm.h>
 #include <linux/pm_legacy.h>
+#include <linux/proc_fs.h>
 
 #include <asm/irq.h>
 #include <asm/pgtable.h>
@@ -31,9 +32,9 @@
 #include <asm/processor.h>
 #include <asm/jzsoc.h>
 
-#include "console/fbcon.h"
+#include <linux/jz4740_slcd.h>
 
-#include "jz4740_slcd.h"
+#include "console/fbcon.h"
 
 #undef DEBUG
 //#define DEBUG
@@ -51,6 +52,8 @@
 #else
 #define print_dbg(f, arg...) do {} while (0)
 #endif
+
+static unsigned long backlight_level = 100;
 
 static jz_dma_desc slcd_palette_desc __attribute__ ((aligned (16)));
 static jz_dma_desc slcd_frame_desc __attribute__ ((aligned (16)));
@@ -314,7 +317,8 @@ static int jzfb_ioctl (struct fb_info *info, unsigned int cmd, unsigned long arg
 
 	switch (cmd) {
 	case FBIOSETBACKLIGHT:
-		__slcd_set_backlight_level(arg);	/* We support 8 levels here. */
+		backlight_level = arg;
+		__slcd_set_backlight_level(backlight_level);	/* 0-100 */
 		break;
 	case FBIODISPON:
 		__slcd_display_on();
@@ -1234,7 +1238,7 @@ static int jzfb_resume(void)
 	__dmac_enable_channel(dma_chan);
 	__dmac_channel_set_doorbell(dma_chan);
 	mdelay(200);
-	__slcd_set_backlight_level(80); 
+	__slcd_set_backlight_level(backlight_level); 
 	return 0;
 }
 
@@ -1268,10 +1272,27 @@ static int jzslcd_pm_callback(struct pm_dev *pm_dev, pm_request_t req, void *dat
 #define jzfb_suspend      NULL
 #define jzfb_resume       NULL
 #endif /* CONFIG_PM */
+
+static int proc_lcd_backlight_read_proc (
+	char *page, char **start, off_t off,
+	int count, int *eof, void *data)
+{
+	return sprintf(page, "%lu\n", backlight_level);
+}
+
+static int proc_lcd_backlight_write_proc (struct file *file, const char *buffer,
+               unsigned long count, void *data)
+{
+ 	backlight_level = simple_strtoul(buffer, 0, 10);
+	__slcd_set_backlight_level(backlight_level);
+	return count;
+}
+
 static int __init jzslcd_fb_init(void)
 {
 
 	struct lcd_cfb_info *cfb;
+	struct proc_dir_entry *res;
 	int err = 0;
 
 	/*the parameters of slcd*/
@@ -1308,7 +1329,7 @@ static int __init jzslcd_fb_init(void)
 		return err;
 	}
 	mdelay(100);
-	__slcd_set_backlight_level(80);
+	__slcd_set_backlight_level(backlight_level);
 
 #ifdef CONFIG_PM
 	/*
@@ -1322,6 +1343,13 @@ static int __init jzslcd_fb_init(void)
 		cfb->pm->data = cfb;
 
 #endif
+	res = create_proc_entry("jz/lcd_backlight", 0, NULL);
+	if (res) {
+		res->owner = THIS_MODULE;
+		res->read_proc = proc_lcd_backlight_read_proc;
+		res->write_proc = proc_lcd_backlight_write_proc;
+	}
+
 	return 0;
 
 failed:
@@ -1354,6 +1382,8 @@ static struct device_driver jzfb_driver = {
 
 static void __exit jzslcd_fb_cleanup(void)
 {
+	remove_proc_entry("jz/lcd_backlight", NULL);
+
 	//driver_unregister(&jzfb_driver);
 	//jzfb_remove();
 }

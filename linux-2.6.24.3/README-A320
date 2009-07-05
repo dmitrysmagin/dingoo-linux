@@ -113,6 +113,21 @@ other info reading is implemented, it will be available in the second and
 further lines read from /proc/jz/battery.
 
 -------------------
+** LCD backlight **
+-------------------
+
+You can change the LCD backlight level by using the FBIOSETBACKLIGHT ioctl
+command on the /dev/fb0 interface or by writing to /proc/jz/lcd_backlight.
+I recommend the later method since the first requires kernel headers,
+which Ingenic didn't event bother to place in the right place (the ioctl
+defintions are in drivers/video/jz4740_slcd.h).
+
+Write a value between 0 and 100.
+
+Note: the relation between the value and the luminosity is not linear.
+This is likely to be fixed some day.
+
+-------------------
 ** Miscellaneous **
 -------------------
 
