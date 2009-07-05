@@ -15,7 +15,7 @@ obj-$(CONFIG_JZ_TPANEL)		+= jz_ts.o
 obj-$(CONFIG_JZ_TPANEL_UCB1400)	+= ucb1400.o
 obj-$(CONFIG_JZ_TPANEL_WM9712)	+= wm9712.o
 obj-$(CONFIG_JZ_TPANEL_AK4182)	+= ak4182.o
-obj-$(CONFIG_JZ_SADC)		+= sadc.o
+obj-$(CONFIG_JZ_SADC)		+= jz_sadc.o
 
 obj-$(CONFIG_JZ_SMART_LCD)	+= slcd.o
 obj-$(CONFIG_JZ_UDC_HOTPLUG)	+= udc_hotplug.o
