@@ -155,8 +155,9 @@ unsigned int jz4740_read_battery(void)
 	if(!(REG_SADC_STATE & SADC_STATE_PBATRDY) == 1)
 		start_pbat_adc();
 
+	/* Be nice and yield, we are not in a hurry here, it's just the battery !!! */
 	while(!(REG_SADC_STATE & SADC_STATE_PBATRDY) && --timeout)
-		;
+		yield();
 
 	pbat = REG_SADC_BATDAT;
 	v = pbat & 0x0fff;
