@@ -1,5 +1,5 @@
 /*
- * linux/drivers/char/jzchar/sadc.c
+ * linux/drivers/char/jzchar/jz_sadc.c
  *
  * SAR-ADC driver for JZ4740.
  *
@@ -37,6 +37,7 @@
 
 #include "jzchars.h"
 #include "jz_ts.h"
+#include "jz_sadc.h"
 
 MODULE_AUTHOR("Jianli Wei<jlwei@ingenic.cn>");
 MODULE_DESCRIPTION("JZ4740 SADC driver");
@@ -372,7 +373,15 @@ static ssize_t sadc_write(struct file *filp, const char *buf, size_t size, loff_
 
 static int sadc_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
 {
+	void __user *argp = (void __user *)arg;
+	unsigned int battery;
+
 	switch (cmd) {
+	case IOCTL_SADC_READ_BATTERY:
+		battery = jz4740_read_battery();
+		if (copy_to_user(argp, &battery, sizeof(battery)))
+			return -EFAULT;
+		break;
 	default:
 		printk("Not supported command: 0x%x\n", cmd);
 		return -EINVAL;
