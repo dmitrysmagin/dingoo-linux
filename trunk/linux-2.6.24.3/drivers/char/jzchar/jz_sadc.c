@@ -39,7 +39,6 @@
 
 #include "jzchars.h"
 #include "jz_ts.h"
-#include "jz_sadc.h"
 
 MODULE_AUTHOR("Jianli Wei<jlwei@ingenic.cn>");
 MODULE_DESCRIPTION("JZ4740 SADC driver");
@@ -103,9 +102,8 @@ void start_sadcin(void)
 
 void start_pbat_adc(void)
 {
-	REG_SADC_CFG |= SADC_CFG_PBAT_HIGH ;   /* full baterry voltage >= 2.5V */
+	REG_SADC_CFG |= SADC_CFG_PBAT_HIGH;   /* full baterry voltage >= 2.5V */
 //  	REG_SADC_CFG |= SADC_CFG_PBAT_LOW;    /* full baterry voltage < 2.5V */
-
   	REG_SADC_ENA |= SADC_ENA_PBATEN;      /* Enable pbat adc */
 }
 
@@ -361,15 +359,7 @@ static int sadc_release(struct inode *inode, struct file *filp)
 
 static int sadc_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	void __user *argp = (void __user *)arg;
-	unsigned int battery;
-
 	switch (cmd) {
-	case IOCTL_SADC_READ_BATTERY:
-		battery = jz4740_read_battery();
-		if (copy_to_user(argp, &battery, sizeof(battery)))
-			return -EFAULT;
-		break;
 	default:
 		printk("Not supported command: 0x%x\n", cmd);
 		return -EINVAL;
@@ -393,7 +383,8 @@ static const struct file_operations proc_sadc_battery_fops = {
 
 static int proc_sadc_battery_show(struct seq_file *m, void *v)
 {
-	seq_printf(m, "%u\n", jz4740_read_battery());
+	unsigned int mv = (jz4740_read_battery() * 7500 + 2048) / 4096;
+	seq_printf(m, "%u\n", mv);
 	return 0;
 }
 
