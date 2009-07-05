@@ -35,10 +35,10 @@ input device code. The standard keyboard map is as follows:
     B button            KEY_LEFTATL
     X button            KEY_SPACE
     Y button            KEY_LEFTSHIFT
-    Left shoulder       KEY_TAB
+    Left shoulder       KEY_TAB		KEY_EXIT
     Right shoulder      KEY_BACKSPACE
     START button        KEY_ENTER
-    SELECT button       KEY_ESC         KEY_KEYBOARD		'b'
+    SELECT button       KEY_ESC         KEY_MENU		'b'
 
 The second column is the generated keycode when the button is pressed normally.
 The third column is the generated keycode when the button is pressed while the
