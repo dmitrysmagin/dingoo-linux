@@ -103,29 +103,14 @@ frequency below the 336MHz set by the boot hardware initialization code
 ** Battery **
 -------------
 
-The easiest way to read the battery level is by using the procfs
-interface: just reading from /proc/jz/battery. The obtained value is the
-direct reading from the analog to digital converter.
+You can read the battery status by reading from /proc/jz/battery. You will
+read a single line with a decimal value which is the battery voltage in
+millivolts.
 
-You can also use IOCTL command 0 on char devide major 238 and minor 12.
-The Ingenic code does not comply with the sysfs standard and thus you
-won't seet this device in /dev unless you manually create it:
-
-mknod /dev/jz-sadc c 238 12
-
-I suggest you use the /proc/jz/battery interface and forget about the
-ioctl. I'll probably remove it eventually, because if properly done,
-would require a kernel header with the IOCTL command definitions.
-
-I don't know much yet about how the read value translates into battery
-level. As developers report on this issue the information will be
-published.
-
-The procfs interface IS SUBJECT TO CHANGE. In particular, dingux is
-intended to support several devices, and the direct conversion values read
-may be different for each. In order to be platform independent, the
-definitive interface should return, for example, a percentage of full
-battery charge.
+We want a platform independent way of reading the battery status, and thus
+we need something like a percentage of full battery charge. When this and
+other info reading is implemented, it will be available in the second and
+further lines read from /proc/jz/battery.
 
 -------------------
 ** Miscellaneous **
