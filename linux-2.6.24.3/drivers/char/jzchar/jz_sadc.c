@@ -394,6 +394,7 @@ static const struct file_operations proc_sadc_battery_fops = {
 static int proc_sadc_battery_show(struct seq_file *m, void *v)
 {
 	seq_printf(m, "%u\n", jz4740_read_battery());
+	return 0;
 }
 
 static int proc_sadc_battery_open(struct inode *inode, struct file *file)
@@ -589,7 +590,7 @@ static int __init sadc_init(void)
 	ret = jz_register_chrdev(SADC_MINOR, SADC_NAME, &sadc_fops, dev);
 	if (ret < 0) goto free_dev;
 
-	pent = create_proc_entry("jz/battery", S_IFREG|S_IRUGO, NULL);
+	pent = create_proc_entry("jz/battery", 0, NULL);
 	if (pent) {
 		pent->owner = THIS_MODULE;
 		pent->proc_fops = &proc_sadc_battery_fops;
