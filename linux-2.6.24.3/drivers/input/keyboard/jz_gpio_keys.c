@@ -151,6 +151,7 @@ static void jz_kbd_poll (struct input_polled_dev *dev)
 					if (kbd->power_count == POWER_COUNT) {
 						input_report_key(input, KEY_POWER, 1);
 						input_report_key(input, KEY_POWER, 0);
+						sync++;
 					}
 					if (kbd->power_count == REBOOT_COUNT) {
  						handle_sysrq('s', NULL); /* Force sync */
