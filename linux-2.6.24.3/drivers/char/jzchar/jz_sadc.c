@@ -30,6 +30,8 @@
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/spinlock.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
 #include <asm/irq.h>
 #include <asm/uaccess.h>
@@ -152,7 +154,7 @@ unsigned int jz4740_read_battery(void)
 	unsigned int timeout = 0x3ff;
 	u16 pbat;
 
-	if(!(REG_SADC_STATE & SADC_STATE_PBATRDY) ==1)
+	if(!(REG_SADC_STATE & SADC_STATE_PBATRDY) == 1)
 		start_pbat_adc();
 
 	while(!(REG_SADC_STATE & SADC_STATE_PBATRDY) && --timeout)
@@ -170,7 +172,7 @@ unsigned int jz4740_read_battery(void)
 #define DIFF(a,b) (((a)>(b))?((a)-(b)):((b)-(a)))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-#if 0
+#if  0
 #define XM 36 /* XM and YM may be changed for your screen */
 #define YM 20
 static int calibrate_samples(void *xbuf, void *ybuf, void *pbuf, int count)
@@ -332,7 +334,7 @@ static unsigned long transform_to_screen_y(struct jz_ts_t *ts, unsigned long y)
 #endif
 
 /*
- * File operations
+ * Device file operations
  */
 static int sadc_open(struct inode *inode, struct file *filp);
 static int sadc_release(struct inode *inode, struct file *filp);
@@ -374,6 +376,29 @@ static int sadc_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, 
 		break;
 	}
 	return 0;
+}
+
+/*
+ * procfs interface file operations
+ */
+
+static int proc_sadc_battery_open(struct inode *inode, struct file *file);
+
+static const struct file_operations proc_sadc_battery_fops = {
+	.open		= proc_sadc_battery_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static int proc_sadc_battery_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "%u\n", jz4740_read_battery());
+}
+
+static int proc_sadc_battery_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_sadc_battery_show, NULL);
 }
 
 /*------------------ Common routines -------------------*/
@@ -553,6 +578,7 @@ int AcquireEvent(struct jz_ts_t *ts, struct ts_event *event)
 static int __init sadc_init(void)
 {
 	struct sadc_device *dev;
+	struct proc_dir_entry *pent;
 	int ret;
 
 	/* allocate device */
@@ -561,9 +587,12 @@ static int __init sadc_init(void)
 
 	sadc_dev = dev;
 	ret = jz_register_chrdev(SADC_MINOR, SADC_NAME, &sadc_fops, dev);
-	if (ret < 0) {
-		kfree(dev);
-		return ret;
+	if (ret < 0) goto free_dev;
+
+	pent = create_proc_entry("jz/battery", S_IFREG|S_IRUGO, NULL);
+	if (pent) {
+		pent->owner = THIS_MODULE;
+		pent->proc_fops = &proc_sadc_battery_fops;
 	}
 
 #ifdef CONFIG_JZ_TPANEL_SADC
@@ -574,11 +603,17 @@ static int __init sadc_init(void)
 
 	printk("JZ4740 SAR-ADC driver registered\n");
 	return 0;
+
+free_dev:
+	kfree(dev);
+	return ret;
 }
 
 static void __exit sadc_exit(void)
 {
 	struct sadc_device *dev = sadc_dev;
+
+	remove_proc_entry("jz/battery", NULL);	
 
 	free_irq(IRQ_SADC, dev);
 	jz_unregister_chrdev(SADC_MINOR, SADC_NAME);
