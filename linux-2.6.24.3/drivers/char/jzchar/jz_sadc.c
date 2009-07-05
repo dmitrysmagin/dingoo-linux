@@ -43,7 +43,7 @@ MODULE_AUTHOR("Jianli Wei<jlwei@ingenic.cn>");
 MODULE_DESCRIPTION("JZ4740 SADC driver");
 MODULE_LICENSE("GPL");
 
-#define SADC_NAME        "sadc"
+#define SADC_NAME        "jz-sadc"
 
 struct sadc_device {
 	int mode;
