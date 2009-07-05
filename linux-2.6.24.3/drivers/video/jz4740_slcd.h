@@ -581,14 +581,27 @@ do {	\
 
 
 #ifdef CONFIG_JZ4740_A320
+/* 100 level: 0,1,...,100 */
 #define GPIO_PWM	127	/* GPD31 */
 #define PWM_CHN		7	/* PWM channel */
 #define PWM_FULL	101
-/* 100 level: 0,1,...,100 */
-#define __slcd_set_backlight_level(n)	\
-do {					\
-	__gpio_as_output(GPIO_PWM);	\
-	__gpio_set_pin(GPIO_PWM);	\
+#define __slcd_set_backlight_level(n)			\
+do {							\
+	u32 v = __cpm_get_extalclk() / 1000;		\
+	__gpio_as_pwm(7);				\
+	__tcu_disable_pwm_output(PWM_CHN);		\
+	__tcu_stop_counter(PWM_CHN);			\
+	__tcu_init_pwm_output_high(PWM_CHN);		\
+	__tcu_set_pwm_output_shutdown_abrupt(PWM_CHN);	\
+	__tcu_select_clk_div1(PWM_CHN);			\
+	__tcu_mask_full_match_irq(PWM_CHN);		\
+	__tcu_mask_half_match_irq(PWM_CHN);		\
+	__tcu_set_count(PWM_CHN, 0);			\
+	__tcu_set_full_data(PWM_CHN, v + 1);		\
+	__tcu_set_half_data(PWM_CHN, v * n / 100);	\
+	__tcu_enable_pwm_output(PWM_CHN);		\
+	__tcu_select_extalclk(PWM_CHN);			\
+	__tcu_start_counter(PWM_CHN);			\
 } while (0)
 
 #define __slcd_close_backlight()	\
