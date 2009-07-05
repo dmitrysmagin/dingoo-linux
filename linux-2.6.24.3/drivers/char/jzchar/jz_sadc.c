@@ -336,16 +336,12 @@ static unsigned long transform_to_screen_y(struct jz_ts_t *ts, unsigned long y)
  */
 static int sadc_open(struct inode *inode, struct file *filp);
 static int sadc_release(struct inode *inode, struct file *filp);
-static ssize_t sadc_read(struct file *filp, char *buf, size_t size, loff_t *l);
-static ssize_t sadc_write(struct file *filp, const char *buf, size_t size, loff_t *l);
 static int sadc_ioctl(struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg);
 
 static struct file_operations sadc_fops = 
 {
 	open:		sadc_open,
 	release:	sadc_release,
-	read:		sadc_read,
-	write:		sadc_write,
 	ioctl:		sadc_ioctl
 };
 
@@ -359,16 +355,6 @@ static int sadc_release(struct inode *inode, struct file *filp)
 {
  	module_put(THIS_MODULE);
 	return 0;
-}
-
-static ssize_t sadc_read(struct file *filp, char *buf, size_t size, loff_t *l)
-{
-	return size;
-}
-
-static ssize_t sadc_write(struct file *filp, const char *buf, size_t size, loff_t *l)
-{
-	return size;
 }
 
 static int sadc_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
