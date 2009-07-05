@@ -32,9 +32,8 @@
 #include <asm/processor.h>
 #include <asm/jzsoc.h>
 
-#include <linux/jz4740_slcd.h>
-
 #include "console/fbcon.h"
+#include "jz4740_slcd.h"
 
 #undef DEBUG
 //#define DEBUG
