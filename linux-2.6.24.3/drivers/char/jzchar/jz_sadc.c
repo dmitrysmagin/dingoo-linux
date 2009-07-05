@@ -570,7 +570,7 @@ int AcquireEvent(struct jz_ts_t *ts, struct ts_event *event)
 static int __init sadc_init(void)
 {
 	struct sadc_device *dev;
-	struct proc_dir_entry *pent;
+	struct proc_dir_entry *res;
 	int ret;
 
 	/* allocate device */
@@ -581,10 +581,10 @@ static int __init sadc_init(void)
 	ret = jz_register_chrdev(SADC_MINOR, SADC_NAME, &sadc_fops, dev);
 	if (ret < 0) goto free_dev;
 
-	pent = create_proc_entry("jz/battery", 0, NULL);
-	if (pent) {
-		pent->owner = THIS_MODULE;
-		pent->proc_fops = &proc_sadc_battery_fops;
+	res = create_proc_entry("jz/battery", 0, NULL);
+	if (res) {
+		res->owner = THIS_MODULE;
+		res->proc_fops = &proc_sadc_battery_fops;
 	}
 
 #ifdef CONFIG_JZ_TPANEL_SADC
