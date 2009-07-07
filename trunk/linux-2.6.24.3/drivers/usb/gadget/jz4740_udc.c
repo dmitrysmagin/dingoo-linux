@@ -2031,7 +2031,6 @@ static irqreturn_t jz4740_udc_irq(int irq, void *_dev)
 	if ((intr_usb & USB_INTR_SUSPEND) && 
 	    (usb_readb(USB_REG_INTRUSBE) & USB_INTR_SUSPEND)) {
 		DEBUG("USB suspend\n");
-		dev->driver->suspend(&dev->gadget);
 		/* Host unloaded from us, can do something, such as flushing
 		 the NAND block cache etc. */
 	}
@@ -2210,8 +2209,6 @@ static int jz4740_udc_remove(struct platform_device *pdev)
 static struct platform_driver udc_driver = {
 	.probe		= jz4740_udc_probe,
 	.remove		= jz4740_udc_remove,
-	.suspend	= NULL,
-	.resume		= NULL,
 	.driver		= {
 		.name	= (char *) driver_name,
 		.owner	= THIS_MODULE,
