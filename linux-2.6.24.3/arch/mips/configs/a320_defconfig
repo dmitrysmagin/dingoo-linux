@@ -830,7 +830,7 @@ CONFIG_MAGIC_SYSRQ=y
 # CONFIG_HEADERS_CHECK is not set
 # CONFIG_DEBUG_KERNEL is not set
 # CONFIG_SAMPLES is not set
-CONFIG_CMDLINE="console=ttyS0,57600n8 boot=/dev/mmcblk0p1 loop0=/boot/rootfs root=/dev/loop0"
+CONFIG_CMDLINE="console=tty0 boot=/dev/mmcblk0p1 loop0=/boot/rootfs root=/dev/loop0"
 
 #
 # Security options
