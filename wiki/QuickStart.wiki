@@ -1,4 +1,6 @@
 #labels mk
+*IMPORTANT: this information is deprecated as of release of FAT dingux. Please stay tuned for updates*
+
 How to get linux up and running in your A320 in a few steps (from a Linux PC):
 
 = Requirements =
