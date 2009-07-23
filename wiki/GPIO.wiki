@@ -128,7 +128,7 @@ Pin usage:
 || 27 || *GPIO output AUDIO mute (0=no sound)* ||
 || 28 || NAND FRE# ||
 || 29 || NAND FWE# ||
-|| 30 || _*GPIO input, maybe used to sense NAND busy state?*_ ||
+|| 30 || *GPIO input, battery charging state (0=charging, TO BE VERIFIED)* ||
 || 31 || _*GPIO input, configured as low level interrupt by the ROM IPL (initial program loader), probably unused thereafter*_ ||
 
 = Port D =
