@@ -1,3 +1,5 @@
+*IMPORTANTE: esta información está anticuada tras la publicación de FAT dingux. Será actualizada lo antes posible.*
+
 Cómo arrancar y tener linux funcionando en tu A320 en unos pocos pasos.
 
 = Requerimientos =
