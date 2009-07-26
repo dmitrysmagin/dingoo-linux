@@ -385,12 +385,13 @@ static void gpio_init(void)
 	 * Initialize UART0 pins
 	 *
 	 * IMPORTANT: __gpio_as_uart0() disables the pull-ups,
-	 * and we neet to keep them enabled to avoid spurious
-	 * detection of break condition when user does not have
-	 * a the serial port connected.
+	 * and we need to keep them enabled to avoid spurious
+	 * detection of break condition or gargabe input when
+	 * the serial RX line is not driven.
 	 */
 	REG_GPIO_PXFUNS(3) = 0x06000000;
 	REG_GPIO_PXSELS(3) = 0x06000000;
+	REG_GPIO_PXPEC(3) = 0x06000000;
 
 	/*
 	 * Initialize NAND pins
