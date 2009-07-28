@@ -62,9 +62,9 @@ static const struct {
 
 #ifdef CONFIG_JZ4740_PAVO
 	{ .gpio = 96,	.actlow = 1,	.ncode = KEY_1 },
-	{ .gpio = 97,	.actlow = 1,	.ncode = KEY_1 },
-	{ .gpio = 98,	.actlow = 1,	.ncode = KEY_1 },
-	{ .gpio = 99,	.actlow = 1,	.ncode = KEY_1 },
+	{ .gpio = 97,	.actlow = 1,	.ncode = KEY_2 },
+	{ .gpio = 98,	.actlow = 1,	.ncode = KEY_3 },
+	{ .gpio = 99,	.actlow = 1,	.ncode = KEY_4 },
 #endif
 
 };
