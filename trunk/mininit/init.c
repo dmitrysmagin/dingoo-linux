@@ -183,15 +183,12 @@ static int _read_line (const char *path, char *buf, int len, int fatal) {
 //==============================================================================
 //==============================================================================
 //
-//	Setup a loop device with optional encryption.
+//	Setup a loop device.
 //
 
 static int _losetup (
 	const char *loop,			// Loop device
 	const char *file,			// Target file (or block device)
-	const char *encryption,		// Encryption type
-	const void *key,			// Encryption key
-	unsigned int key_size,		// Encryption key size
 	int fatal
 ) {
 	int r, loopfd = -1, filefd = -1, mode;
@@ -208,7 +205,7 @@ static int _losetup (
 		if (r < 0) { if (fatal) _fatal("cannot open %s", loop); goto exit; }
 	}
 
-	r = losetup(loopfd, filefd, file, encryption, key, key_size);
+	r = losetup(loopfd, filefd, file);
 	if (r < 0 && fatal) _fatal("cannot setup loop device %s", loop);
 
 exit:
@@ -218,26 +215,6 @@ exit:
 	return r;
 }
 
-//
-//	Deinitialize a loop device.
-//
-/*
-static int _lodelete (const char *loop, int fatal) {
-
-	int r, loopfd = -1;
-
-	r = loopfd = open(loop, O_RDONLY, 0);
-	if (r < 0) { if (fatal) _fatal("cannot open %s", loop); goto exit; }
-
-	r = lodelete(loopfd); close(loopfd);
-	if (r < 0 && fatal) _fatal("cannot delete loop device %s", loop);
-
-exit:
-
-	close(loopfd);
-	return r;
-}
-*/
 //==============================================================================
 //==============================================================================
 //==============================================================================
@@ -268,7 +245,7 @@ static int _mkparam (char *buf, char **paramv, int maxparam) {
 
 int main (int argc, char **argv) {
 
-	int i, f, boot = 0;
+	int i, f, boot = 0; char c, *s, *t;
 
 	char loop_dev [] = "/dev/loop0";
 	char cbuf [4096];
@@ -299,7 +276,7 @@ int main (int argc, char **argv) {
 	paramc = 1 + _mkparam(cbuf, paramv + 1, sizeof(paramv) / sizeof(paramv[0]) - 2);
 
 	//
-	// Process "boot" parameter (ONLY ONE)
+	// Process "boot" parameter (ONLY ONE, ALLOW COMMA SEPARATED LIST)
 	//
 	// Note that we specify 20 retries (2 seconds), just in case it is
 	// a hotplug device which takes some time to detect and initialize.
@@ -309,11 +286,29 @@ int main (int argc, char **argv) {
 
 		if (strncmp(paramv[i], "boot=", 5)) continue;
 
-		printf("Mounting %s on /boot\n", paramv[i] + 5);
-		_mount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, NULL, 20, 1);
+		for (s = paramv[i] + 5;; s = t + 1) {
 
-		boot = 1;
-		break;
+			for (t = s; *t != '\0' && *t != ','; t++); c = *t;
+			memmove(paramv[i] + 5, s, t - s);
+			paramv[i][5 + t - s] = '\0';
+
+			if (access(paramv[i] + 5, R_OK) >= 0) {
+				printf("Mounting %s on /boot ... ", paramv[i] + 5);
+				if (_mount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, NULL, 20, 0) < 0)
+					printf("failed\n");
+				else {
+					printf("success\n");
+					boot = 1;
+					break;
+				}
+			}
+			
+			printf("Could not mount %s on /boot\n", paramv[i] + 5);
+
+			if (c == '\0') _fatal("could not mount /boot");
+		}
+
+		break; /* only one */
 	}
 
 	//
@@ -327,9 +322,7 @@ int main (int argc, char **argv) {
 		loop_dev[9] = paramv[i][4];
 
 		printf("Setting up loopback %s %s\n", loop_dev, paramv[i] + 6);
-		_losetup(loop_dev, paramv[i] + 6, NULL, NULL, 0, 1);
-
-		break;
+		_losetup(loop_dev, paramv[i] + 6, 1);
 	}
 
 	//
@@ -343,10 +336,28 @@ int main (int argc, char **argv) {
 
 		if (strncmp(paramv[i], "root=", 5)) continue;
 
-		printf("Mounting %s as root\n", paramv[i] + 5);
-		_mount(paramv[i] + 5, "/root", NULL, MS_RDONLY, NULL, 20, 1);
+		for (s = paramv[i] + 5;; s = t + 1) {
 
-		break;
+			for (t = s; *t != '\0' && *t != ','; t++); c = *t;
+			memmove(paramv[i] + 5, s, t - s);
+			paramv[i][5 + t - s] = '\0';
+
+			if (access(paramv[i] + 5, R_OK) >= 0) {
+				printf("Mounting %s as root ... ", paramv[i] + 5);
+				if (_mount(paramv[i] + 5, "/root", NULL, MS_RDONLY, NULL, 20, 0) < 0)
+					printf("failed\n");
+				else {
+					printf("success\n");
+					break;
+				}
+			}
+
+			printf("Could not mount %s as root\n", paramv[i] + 5);
+
+			if (c == '\0') _fatal("could not mount root");
+		}
+
+		break; /* only one */
 	}
 
 	if (i >= paramc)
