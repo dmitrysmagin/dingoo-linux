@@ -8,10 +8,7 @@
 int losetup (
 	int loopfd,
 	int filefd,
-	const char *filename,
-	const char *encryption,
-	const void *key,
-	unsigned int key_size
+	const char *filename
 );
 
 int lodelete (int loopfd);
