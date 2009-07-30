@@ -66,7 +66,7 @@
 
 #define GS_CLOSE_TIMEOUT		15
 
-#define GS_DEFAULT_USE_ACM		1
+#define GS_DEFAULT_USE_ACM		0
 
 /* 9600-8-N-1 ... matches init_termios.c_cflag and defaults
  * expected by "usbser.sys" on MS-Windows.
