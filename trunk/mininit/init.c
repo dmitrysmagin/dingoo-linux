@@ -112,30 +112,22 @@ static int _mount (
 	const char *type,		// Filesystem type (NULL to guess)
 	unsigned long flags,	// Mount flags
 	const void *data,		// Special data (depens on filesystem)
-	int retries,			// Number of retries (100ms delay in between)
 	int fatal
 ) {
 	int r = _mkdir(target, 0755, fatal); if (r < 0) return r;
 
-	for (;; usleep(100000)) {
-
-		if (type == NULL && !(flags & MS_MOVE)) {	// Don't find out if moving
-			type = fstype(source);
-			if (type == NULL) {
-				if (--retries > 0) continue;
-				if (fatal) _fatal("cannot not guess %s filesystem type", source);
-				return -1;
-			}
+	if (type == NULL && !(flags & MS_MOVE)) {	// Don't find out if moving
+		type = fstype(source);
+		if (type == NULL) {
+			if (fatal) _fatal("cannot not guess %s filesystem type", source);
+			return -1;
 		}
-
-		r = mount(source, target, type, flags, data);
-		if (r < 0) {
-			if (--retries > 0) continue;
-			if (fatal) _fatal("mounting %s on %s failed", source, target);
-		}
-
-		return r;
 	}
+
+	r = mount(source, target, type, flags, data);
+	if (r < 0 && fatal) _fatal("mounting %s on %s failed", source, target);
+
+	return r;
 }
 
 //
@@ -240,12 +232,45 @@ static int _mkparam (char *buf, char **paramv, int maxparam) {
 }
 
 //
+//	Multiple, comma separated mount
+//
+
+static int _multimount (
+	char *source,			// Source device
+	const char *target,		// Destination directory (will be made if necessary)
+	const char *type,		// Filesystem type (NULL to guess)
+	unsigned long flags,	// Mount flags
+	const void *data,		// Special data (depens on filesystem)
+	int retries,
+	int fatal
+) {
+	int try; char c, *s, *t;
+
+	for (try = 0; try < retries; usleep(100000), try++) {
+
+		for (c = ',', s = source; c == ','; *s++ = c) {
+
+			for (t = s; *s != ',' && *s != '\0'; s++); c = *s; *s = '\0';
+
+			if (access(t, R_OK) >= 0 && _mount(t, target, type, flags, data, 0) >= 0) {
+				printf("Mounting %s on %s\n", t, target);
+				*s = c;
+				return 0;
+			}
+		}
+	}
+
+	if (fatal) _fatal("cannot mount %s on %s\n", source, target);
+	return -1;
+}
+
+//
 //	Main function.
 //
 
 int main (int argc, char **argv) {
 
-	int i, f, boot = 0; char c, *s, *t;
+	int i, f, boot = 0;
 
 	char loop_dev [] = "/dev/loop0";
 	char cbuf [4096];
@@ -262,8 +287,8 @@ int main (int argc, char **argv) {
 	//
 
 	printf("Mounting /proc /sys /dev\n");
-	_mount(NULL, "/proc", "proc", 0, NULL, 1, 1);
-	_mount(NULL, "/sys", "sysfs", 0, NULL, 1, 1);
+	_mount(NULL, "/proc", "proc", 0, NULL, 1);
+	_mount(NULL, "/sys", "sysfs", 0, NULL, 1);
 
 	//
 	// Get arguments from kernel command line and real-root-dev
@@ -283,31 +308,9 @@ int main (int argc, char **argv) {
 	//
 
 	for (i = 1; i < paramc; i++) {
-
 		if (strncmp(paramv[i], "boot=", 5)) continue;
-
-		for (s = paramv[i] + 5;; s = t + 1) {
-
-			for (t = s; *t != '\0' && *t != ','; t++); c = *t;
-			memmove(paramv[i] + 5, s, t - s);
-			paramv[i][5 + t - s] = '\0';
-
-			if (access(paramv[i] + 5, R_OK) >= 0) {
-				printf("Mounting %s on /boot ... ", paramv[i] + 5);
-				if (_mount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, NULL, 20, 0) < 0)
-					printf("failed\n");
-				else {
-					printf("success\n");
-					boot = 1;
-					break;
-				}
-			}
-			
-			printf("Could not mount %s on /boot\n", paramv[i] + 5);
-
-			if (c == '\0') _fatal("could not mount /boot");
-		}
-
+		_multimount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, NULL, 20, 1);
+		boot = 1;
 		break; /* only one */
 	}
 
@@ -333,30 +336,8 @@ int main (int argc, char **argv) {
 	//
 
 	for (i = 1; i < paramc; i++) {
-
 		if (strncmp(paramv[i], "root=", 5)) continue;
-
-		for (s = paramv[i] + 5;; s = t + 1) {
-
-			for (t = s; *t != '\0' && *t != ','; t++); c = *t;
-			memmove(paramv[i] + 5, s, t - s);
-			paramv[i][5 + t - s] = '\0';
-
-			if (access(paramv[i] + 5, R_OK) >= 0) {
-				printf("Mounting %s as root ... ", paramv[i] + 5);
-				if (_mount(paramv[i] + 5, "/root", NULL, MS_RDONLY, NULL, 20, 0) < 0)
-					printf("failed\n");
-				else {
-					printf("success\n");
-					break;
-				}
-			}
-
-			printf("Could not mount %s as root\n", paramv[i] + 5);
-
-			if (c == '\0') _fatal("could not mount root");
-		}
-
+		_multimount(paramv[i] + 5, "/root", NULL, MS_RDONLY, NULL, 20, 1);
 		break; /* only one */
 	}
 
@@ -372,7 +353,7 @@ int main (int argc, char **argv) {
 
 	if (boot) {
 		printf("Moving boot mount\n");
-		_mount("/boot", "/root/boot", NULL, MS_MOVE, NULL, 1, 1);
+		_mount("/boot", "/root/boot", NULL, MS_MOVE, NULL, 1);
 	}
 
 
@@ -402,7 +383,7 @@ int main (int argc, char **argv) {
 	_umount("/proc");
 
 	// Do the root switch	
-	_mount(".", "/", NULL, MS_MOVE, NULL, 1, 1);
+	_mount(".", "/", NULL, MS_MOVE, NULL, 1);
 	if (chroot(".") < 0) _fatal("chroot failed");
 	if (chdir("/") < 0) _fatal("chdir failed");
 
