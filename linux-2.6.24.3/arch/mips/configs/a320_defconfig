@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.24.3
-# Thu Jul 16 22:21:56 2009
+# Thu Jul 30 02:27:54 2009
 #
 CONFIG_MIPS=y
 
@@ -830,7 +830,7 @@ CONFIG_MAGIC_SYSRQ=y
 # CONFIG_HEADERS_CHECK is not set
 # CONFIG_DEBUG_KERNEL is not set
 # CONFIG_SAMPLES is not set
-CONFIG_CMDLINE="console=tty0 boot=/dev/mmcblk0p1 loop0=/boot/rootfs root=/dev/loop0 jz4740_udc.use_dma=0"
+CONFIG_CMDLINE="console=tty0 boot=/dev/mmcblk0,/dev/mmcblk0p1 loop0=/boot/rootfs root=/dev/loop0 jz4740_udc.use_dma=0"
 
 #
 # Security options
