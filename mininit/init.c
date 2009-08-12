@@ -309,7 +309,7 @@ int main (int argc, char **argv) {
 
 	for (i = 1; i < paramc; i++) {
 		if (strncmp(paramv[i], "boot=", 5)) continue;
-		_multimount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, NULL, 20, 1);
+		_multimount(paramv[i] + 5, "/boot", NULL, MS_RDONLY, "utf8", 20, 1);
 		boot = 1;
 		break; /* only one */
 	}
