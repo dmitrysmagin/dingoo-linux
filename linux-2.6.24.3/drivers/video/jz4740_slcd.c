@@ -1139,7 +1139,6 @@ static irqreturn_t slcd_dma_irq(int irq, void *dev_id)
 		if (is_set_reg) {
 			is_set_reg = 0;
 			while (REG_SLCD_STATE & SLCD_STATE_BUSY);
-			REG_DMAC_DMACR &= ~DMAC_DMACR_DMAE; /* disable DMA */
 			REG_DMAC_DCCSR(dma_chan) &= ~DMAC_DCCSR_EN;  /* disable DMA */
 			REG_SLCD_CTRL = 0;
 
@@ -1150,7 +1149,6 @@ static irqreturn_t slcd_dma_irq(int irq, void *dev_id)
 			Mcupanel_Command(0x0022);/*Write Data to GRAM	*/
 			mdelay(100);
 			REG_SLCD_CTRL = SLCD_CTRL_DMA_EN;
-			REG_DMAC_DMACR = DMAC_DMACR_DMAE;
 			REG_DMAC_DCCSR(dma_chan) =  DMAC_DCCSR_EN;
 			__dmac_channel_set_doorbell(dma_chan);
 		}
@@ -1170,8 +1168,7 @@ static int slcd_dma_init(void)
 
 	/*Init the SLCD DMA and Enable*/
 	REG_DMAC_DRSR(dma_chan) = DMAC_DRSR_RS_SLCD;
-	REG_DMAC_DMACR = DMAC_DMACR_DMAE;
-	REG_DMAC_DCCSR(dma_chan) =  DMAC_DCCSR_EN; /*Descriptor Transfer*/
+	REG_DMAC_DCCSR(dma_chan) = DMAC_DCCSR_EN; /*Descriptor Transfer*/
 
 	if (jzfb.bpp <= 8)
 		REG_DMAC_DDA(dma_chan) = slcd_palette_desc_phys_addr;
