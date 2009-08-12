@@ -348,9 +348,11 @@ void enable_dma(unsigned int dmanr)
 
 	REG_DMAC_DCCSR(dmanr) &= ~(DMAC_DCCSR_HLT | DMAC_DCCSR_TT | DMAC_DCCSR_AR);
 	REG_DMAC_DCCSR(dmanr) |= DMAC_DCCSR_NDES; /* No-descriptor transfer */
-	__dmac_enable_channel(dmanr);
+
 	if (chan->irq)
 		__dmac_channel_enable_irq(dmanr);
+
+	__dmac_enable_channel(dmanr);
 }
 
 #define DMA_DISABLE_POLL 0x10000
@@ -375,6 +377,7 @@ void disable_dma(unsigned int dmanr)
 #endif
 
 	__dmac_disable_channel(dmanr);
+
 	if (chan->irq)
 		__dmac_channel_disable_irq(dmanr);
 }
@@ -644,7 +647,7 @@ void dma_nodesc_test(void)
 	REG_DMAC_DTCR(dma_chan) = 512;
 	REG_DMAC_DCMD(dma_chan) = DMAC_DCMD_SAI | DMAC_DCMD_DAI | DMAC_DCMD_SWDH_32 | DMAC_DCMD_DWDH_32 | DMAC_DCMD_DS_32BYTE | DMAC_DCMD_TIE;
 	REG_DMAC_DCCSR(dma_chan) = DMAC_DCCSR_NDES | DMAC_DCCSR_EN;
-	REG_DMAC_DMACR = DMAC_DMACR_DMAE; /* global DMA enable bit */
+	REG_DMAC_DMACR = DMAC_DMACR_DMAE | DMAC_DMACR_PR_RR; /* global DMA enable bit, round-robin priority */
 
 	printk("DMA started. IMR=%08x\n", REG_INTC_IMR);
 }
@@ -739,7 +742,7 @@ void dma_desc_test(void)
 	REG_DMAC_DCCSR(dma_chan) = DMAC_DCCSR_EN;	/* descriptor transfer, clear status, start channel */
 
 	/* Enable DMA */
-	REG_DMAC_DMACR = DMAC_DMACR_DMAE;
+	REG_DMAC_DMACR = DMAC_DMACR_DMAE | DMAC_DMACR_PR_RR;
 
 	/* DMA doorbell set -- start DMA now ... */
 	REG_DMAC_DMADBSR = 1 << dma_chan;
