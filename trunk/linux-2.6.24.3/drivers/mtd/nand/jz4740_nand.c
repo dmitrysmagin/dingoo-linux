@@ -702,7 +702,7 @@ static void jz4740_nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len)
 		REG_DMAC_DTCR(dma_chan) = len / 16;
 		REG_DMAC_DCMD(dma_chan) = DMAC_DCMD_DAI | DMAC_DCMD_SWDH_8 | DMAC_DCMD_DWDH_32 | DMAC_DCMD_DS_16BYTE;
 		REG_DMAC_DCCSR(dma_chan) = DMAC_DCCSR_NDES | DMAC_DCCSR_EN;
-		REG_DMAC_DMACR = DMAC_DMACR_DMAE; /* global DMA enable bit */
+		REG_DMAC_DMACR |= DMAC_DMACR_DMAE; /* global DMA enable bit */
 		
 		while(!(REG_DMAC_DCCSR(dma_chan) & DMAC_DCCSR_TT));
 		REG_DMAC_DCCSR(dma_chan) &= ~DMAC_DCCSR_EN;  /* disable DMA */
@@ -729,7 +729,7 @@ static void jz4740_nand_write_buf(struct mtd_info *mtd, const uint8_t *buf, int 
 		REG_DMAC_DTCR(dma_chan) = len / 16;
 		REG_DMAC_DCMD(dma_chan) = DMAC_DCMD_SAI | DMAC_DCMD_SWDH_32 | DMAC_DCMD_DWDH_8 | DMAC_DCMD_DS_16BYTE ;
 		REG_DMAC_DCCSR(dma_chan) = DMAC_DCCSR_NDES | DMAC_DCCSR_EN;
-		REG_DMAC_DMACR = DMAC_DMACR_DMAE; /* global DMA enable bit */
+		REG_DMAC_DMACR |= DMAC_DMACR_DMAE; /* global DMA enable bit */
 		
 		while(!(REG_DMAC_DCCSR(dma_chan) & DMAC_DCCSR_TT));
 		REG_DMAC_DCCSR(dma_chan) &= ~DMAC_DCCSR_EN;  /* disable DMA */
