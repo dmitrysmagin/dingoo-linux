@@ -113,7 +113,7 @@ static inline int jz_mmc_start_clock(void)
 static inline u32 jz_mmc_calc_clkrt(int is_sd, u32 rate)
 {
 	u32 clkrt;
-	u32 clk_src = is_sd ? 24000000 : 20000000;
+	u32 clk_src = is_sd ? 24000000 : 16000000; /* return values coherent with __cpm_select_msc_clk in include/asm/mach-jz4740/clock.h */
 
 	clkrt = 0;
 	while (rate < clk_src) {
@@ -129,7 +129,7 @@ static int jz_mmc_set_clock(u32 rate)
 	int clkrt;
 
 	jz_mmc_stop_clock();
-	__cpm_select_msc_clk(1);	/* select clock source from CPM */
+	__cpm_select_msc_clk(1);	/* select clock source from CPM (selects SD mode, 24MHz) */
 	clkrt = jz_mmc_calc_clkrt(1, rate);
 	REG_MSC_CLKRT = clkrt;
 	return MMC_NO_ERROR;
