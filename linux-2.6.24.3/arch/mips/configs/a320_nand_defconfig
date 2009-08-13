@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.24.3
-# Mon Jul 20 03:24:32 2009
+# Thu Aug 13 03:38:44 2009
 #
 CONFIG_MIPS=y
 
@@ -773,8 +773,8 @@ CONFIG_MMC_BLOCK_BOUNCE=y
 # MMC/SD Host Controller Drivers
 #
 CONFIG_MMC_JZ=y
-# CONFIG_JZ_MMC_BUS_1 is not set
-CONFIG_JZ_MMC_BUS_4=y
+CONFIG_JZ_MMC_BUS_1=y
+# CONFIG_JZ_MMC_BUS_4 is not set
 # CONFIG_NEW_LEDS is not set
 CONFIG_RTC_LIB=y
 # CONFIG_RTC_CLASS is not set
