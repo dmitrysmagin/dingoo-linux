@@ -86,7 +86,7 @@ static void sadc_init_clock(int div)
 	REG_SADC_CFG &= ~SADC_CFG_CLKDIV_MASK;
 	REG_SADC_CFG |= (div - 1) << SADC_CFG_CLKDIV_BIT;
 #endif
-#if defined(CONFIG_SOC_JZ4750)
+#if defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D)
 	REG_SADC_ADCLK &= ~SADC_ADCLK_CLKDIV_MASK;
 	REG_SADC_ADCLK |= (div - 1) << SADC_ADCLK_CLKDIV_BIT;
 	REG_SADC_ADCLK &= ~SADC_ADCLK_CLKDIV_BIT;

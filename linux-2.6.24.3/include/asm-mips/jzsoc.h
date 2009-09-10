@@ -35,6 +35,10 @@
 #include <asm/mach-jz4750d/jz4750d.h>
 #endif
 
+#ifdef CONFIG_SOC_JZ4750L
+#include <asm/mach-jz4750l/jz4750l.h>
+#endif
+
 /*
  * Generic I/O routines
  */

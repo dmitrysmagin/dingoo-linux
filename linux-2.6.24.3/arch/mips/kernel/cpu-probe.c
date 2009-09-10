@@ -938,6 +938,7 @@ __init void cpu_probe(void)
 		cpu_probe_philips(c);
 		break;
  	case PRID_COMP_INGENIC:
+ 	case 0xd80000: // used on fpga
 		cpu_probe_ingenic(c);
 		break;
 	default:

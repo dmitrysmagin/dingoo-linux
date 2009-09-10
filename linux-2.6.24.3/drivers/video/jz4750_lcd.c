@@ -648,8 +648,18 @@ static int jz4750fb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long 
 		if ( jz4750_lcd_info->panel.cfg & LCD_CFG_LCDPIN_SLCD || 
 			jz4750_lcd_info->panel.cfg & LCD_CFG_TVEN ) /*  */
 			__lcd_clr_ena(); /* Smart lcd and TVE mode only support quick disable */
-		else
+		else {
+			int cnt;
+			/* when CPU main freq is 336MHz,wait for 16ms */
+			cnt = 336000 * 16;
 			__lcd_set_dis(); /* regular disable */
+			while(!__lcd_disable_done() && cnt) {
+				cnt--;
+			}
+			if (cnt == 0)
+				printk("LCD disable timeout! REG_LCD_STATE=0x%08xx\n",REG_LCD_STATE);
+			REG_LCD_STATE &= ~LCD_STATE_LDD;
+		}
 		break;
 	case FBIOPRINT_REG:
 		print_lcdc_registers();

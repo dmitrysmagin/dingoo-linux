@@ -107,8 +107,13 @@ struct jz4750lcd_info {
 	#define SPCK		(32*3+26)       /*LCD_SCL*/
 	#define SPDA		(32*3+27)       /*LCD_SDA*/
 	#define LCD_RET 	(32*4+25)       /*LCD_DISP_N use for lcd reset*/
-#elif defined(CONFIG_JZ4750_FUWA) /* board pavo */
+#elif defined(CONFIG_JZ4750_FUWA) || defined(CONFIG_JZ4750D_FUWA1) /* board fpga */
 	#define SPEN		(32*3+29)       /*LCD_CS*/
+	#define SPCK		(32*3+26)       /*LCD_SCL*/
+	#define SPDA		(32*3+27)       /*LCD_SDA*/
+	#define LCD_RET 	(32*5+2)       /*LCD_DISP_N use for lcd reset*/
+#elif defined(CONFIG_JZ4750L_F4750L) /* board pavo */
+	#define SPEN		(32*3+30)       /*LCD_CS*/
 	#define SPCK		(32*3+26)       /*LCD_SCL*/
 	#define SPDA		(32*3+27)       /*LCD_SDA*/
 	#define LCD_RET 	(32*5+2)       /*LCD_DISP_N use for lcd reset*/

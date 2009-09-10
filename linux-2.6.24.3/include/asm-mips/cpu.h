@@ -35,7 +35,6 @@
 #define PRID_COMP_LEXRA		0x0b0000
 #define PRID_COMP_INGENIC	0xd00000
 
-
 /*
  * Assigned values for the product ID register.  In order to detect a
  * certain CPU type exactly eventually additional registers may need to

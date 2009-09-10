@@ -497,11 +497,6 @@ sigill:
 	send_sig(SIGILL, current, 1);
 }
 
-#if defined(CONFIG_JZ_TCSM)
-#undef user_mode
-#define user_mode(regs) ((((regs)->cp0_status & KU_MASK) == KU_USER) || (regs->cp0_badvaddr < 0x80000000))
-#endif
-
 asmlinkage void do_ade(struct pt_regs *regs)
 {
 	extern int do_dsemulret(struct pt_regs *);
@@ -539,9 +534,8 @@ asmlinkage void do_ade(struct pt_regs *regs)
 	 * This is all so but ugly ...
 	 */
 	seg = get_fs();
-	if (!user_mode(regs)) {
+	if (!user_mode(regs))
 		set_fs(KERNEL_DS);
-	}
 	emulate_load_store_insn(regs, (void __user *)regs->cp0_badvaddr, pc);
 	set_fs(seg);
 

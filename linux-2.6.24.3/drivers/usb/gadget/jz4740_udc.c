@@ -302,7 +302,7 @@ static void udc_disable(struct jz4740_udc *dev)
 	/* Disable the USB PHY */
 #ifdef CONFIG_SOC_JZ4740
 	REG_CPM_SCR &= ~CPM_SCR_USBPHY_ENABLE;
-#elif defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D)
+#elif defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D) || defined(CONFIG_SOC_JZ4750L)
 	REG_CPM_OPCR &= ~CPM_OPCR_UDCPHY_ENABLE;
 #endif
 
@@ -365,7 +365,7 @@ static void udc_enable(struct jz4740_udc *dev)
 	/* Enable the USB PHY */
 #ifdef CONFIG_SOC_JZ4740
 	REG_CPM_SCR |= CPM_SCR_USBPHY_ENABLE;
-#elif defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D)
+#elif defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D) || defined(CONFIG_SOC_JZ4750L)
 	REG_CPM_OPCR |= CPM_OPCR_UDCPHY_ENABLE;
 #endif
 

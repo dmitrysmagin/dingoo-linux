@@ -557,9 +557,6 @@ struct lun {
 	unsigned int	prevent_medium_removal : 1;
 	unsigned int	registered : 1;
 	unsigned int	info_valid : 1;
-#ifdef GHOST
-	unsigned int    is_nand : 1;
-#endif
 	u32		sense_data;
 	u32		sense_data_info;
 	u32		unit_attention_data;
@@ -698,6 +695,10 @@ struct fsg_dev {
 	unsigned int		nluns;
 	struct lun		*luns;
 	struct lun		*curlun;
+
+#ifdef GHOST
+	unsigned int            nand_lb_active;
+#endif
 };
 
 typedef void (*fsg_routine_t)(struct fsg_dev *);
@@ -1635,7 +1636,7 @@ static int do_read(struct fsg_dev *fsg)
 		/* Perform the read */
 		file_offset_tmp = file_offset;
 #ifdef GHOST
-		if (curlun->is_nand)
+		if (fsg->nand_lb_active)
 			nread = udc_read(file_offset_tmp, amount, bh->buf);
 		else
 			nread = vfs_read(curlun->filp,
@@ -1827,7 +1828,7 @@ static int do_write(struct fsg_dev *fsg)
 			/* Perform the write */
 			file_offset_tmp = file_offset;
 #ifdef GHOST
-			if (curlun->is_nand)
+			if (fsg->nand_lb_active)
 				nwritten = udc_write(file_offset_tmp, amount, bh->buf);
 			else
 				nwritten = vfs_write(curlun->filp,
@@ -2013,7 +2014,7 @@ static int do_verify(struct fsg_dev *fsg)
 		/* Perform the read */
 		file_offset_tmp = file_offset;
 #ifdef GHOST
-		if (curlun->is_nand)
+		if (fsg->nand_lb_active)
 			nread = udc_read(file_offset_tmp, amount, bh->buf);
 		else
 			nread = vfs_read(curlun->filp,
@@ -3460,10 +3461,13 @@ static int fsg_main_thread(void *fsg_)
 	/* The main loop */
 	while (fsg->state != FSG_STATE_TERMINATED) {
 #ifdef GHOST
-		if ((fsg->atomic_bitflags & SUSPENDED))
+		if (fsg->nand_lb_active && (test_bit(SUSPENDED, &fsg->atomic_bitflags)))
 		{
 			NAND_LB_FLASHCACHE();
 			NAND_MTD_FLASHCACHE();
+			
+			/* Don't use resume() to clear this flag - It seems inaccurate. We clear it ourself. */
+			clear_bit(SUSPENDED, &fsg->atomic_bitflags);
 		}
 #endif
 		if (exception_in_progress(fsg) || signal_pending(current)) {
@@ -3587,10 +3591,11 @@ static int open_backing_file(struct lun *curlun, const char *filename)
 	curlun->num_sectors = num_sectors;
 	LDBG(curlun, "open backing file: %s\n", filename);
 	rc = 0;
+
 #ifdef GHOST
 	if (strstr(filename,"mtd"))
 	{
-		curlun->is_nand = 1;
+		the_fsg->nand_lb_active = 1;
 		NAND_LB_Init(); 
 	}
 #endif
@@ -3607,6 +3612,13 @@ static void close_backing_file(struct lun *curlun)
 		LDBG(curlun, "close backing file\n");
 		fput(curlun->filp);
 		curlun->filp = NULL;
+
+#ifdef GHOST
+		NAND_LB_FLASHCACHE();
+		NAND_MTD_FLASHCACHE();
+
+		the_fsg->nand_lb_active = 0;
+#endif		
 	}
 }
 
