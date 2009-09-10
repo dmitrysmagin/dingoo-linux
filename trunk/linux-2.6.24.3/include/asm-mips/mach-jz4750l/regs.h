@@ -1,7 +1,7 @@
 /*
- * linux/include/asm-mips/mach-jz4750d/regs.h
+ * linux/include/asm-mips/mach-jz4750l/regs.h
  *
- * JZ4750D register definition.
+ * JZ4750L register definition.
  *
  * Copyright (C) 2008 Ingenic Semiconductor Inc.
  *
@@ -10,8 +10,8 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef __JZ4750D_REGS_H__
-#define __JZ4750D_REGS_H__
+#ifndef __JZ4750L_REGS_H__
+#define __JZ4750L_REGS_H__
 
 #if defined(__ASSEMBLY__) || defined(__LANGUAGE_ASSEMBLY)
 #define REG8(addr)	(addr)
@@ -116,7 +116,7 @@
 #define IRQ_GPIO_0	48  /* 48 to 240 for GPIO pin 0 to 192 */
 
 #define NUM_DMA         MAX_DMA_NUM	/* 12 */
-#define NUM_GPIO        MAX_GPIO_NUM	/* GPIO NUM: 192, Jz4750D real num GPIO 178 */
+#define NUM_GPIO        MAX_GPIO_NUM	/* GPIO NUM: 192, Jz4750L real num GPIO 178 */
 
 
 /*************************************************************************
@@ -254,18 +254,12 @@
 #define CPM_I2SCDR_I2SDIV_MASK	(0x1ff << CPM_I2SCDR_I2SDIV_BIT)
 
 /* LCD Pixel Clock Divider Register */
-#define CPM_LPCDR_LSCS	        (1<<31) /* TV encoder Source Pixel Clock Selection */
-#define CPM_LPCDR_LTCS	        (1<<30) /* LCD TV Encoder or Panel pix clock Selection */
 #define CPM_LPCDR_PIXDIV_BIT	0
 #define CPM_LPCDR_PIXDIV_MASK	(0x7ff << CPM_LPCDR_PIXDIV_BIT)
 
 /* MSC Clock Divider Register */
 #define CPM_MSCCDR_MSCDIV_BIT	0
 #define CPM_MSCCDR_MSCDIV_MASK	(0x1f << CPM_MSCCDR_MSCDIV_BIT)
-
-/* UHC Clock Divider Register */
-#define CPM_UHCCDR_UHCDIV_BIT	0
-#define CPM_UHCCDR_UHCDIV_MASK	(0xf << CPM_UHCCDR_UHCDIV_BIT)
 
 /* SSI Clock Divider Register */
 #define CPM_SSICDR_SSIDIV_BIT	0
@@ -1166,8 +1160,7 @@
 #define	AIC_CR_M2S		(1 << 11)  /* Mono to Stereo enable */
 #define	AIC_CR_ENDSW		(1 << 10)  /* Endian switch enable */
 #define	AIC_CR_AVSTSU		(1 << 9)   /* Signed <-> Unsigned toggle enable */
-#define	AIC_CR_FLUSH_TX		(1 << 8)   /* Flush TX FIFO */
-#define	AIC_CR_FLUSH_RX		(1 << 7)   /* Flush RX FIFO */
+#define	AIC_CR_FLUSH		(1 << 8)   /* Flush FIFO */
 #define	AIC_CR_EROR		(1 << 6)   /* Enable ROR interrupt */
 #define	AIC_CR_ETUR		(1 << 5)   /* Enable TUR interrupt */
 #define	AIC_CR_ERFS		(1 << 4)   /* Enable RFS interrupt */
@@ -3394,4 +3387,4 @@
 #define LUMA_OF_MSK	0xFF
 
 
-#endif /* __JZ4750D_REGS_H__ */
+#endif /* __JZ4750L_REGS_H__ */

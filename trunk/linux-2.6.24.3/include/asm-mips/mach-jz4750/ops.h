@@ -342,7 +342,7 @@ do {		              						\
 	if (!is_share_mode()) {						\
 		/* unshare mode */					\
 		REG_GPIO_PXFUNS(2) = 0x000000ff; /* SD0~SD7 */		\
-		REG_GPIO_PXSELS(2) = 0x000000ff;			\
+		REG_GPIO_PXSELC(2) = 0x000000ff;			\
 		REG_GPIO_PXPES(2) = 0x000000ff;				\
 		REG_GPIO_PXFUNS(1) = 0x00008000; /* CLE(SA3) */		\
 		REG_GPIO_PXSELS(1) = 0x00008000;			\
@@ -3192,10 +3192,10 @@ do {   \
 #define __rtc_enable_alarm_wakeup()        ( REG_RTC_HWCR |= RTC_HWCR_EALM )
 #define __rtc_disable_alarm_wakeup()        ( REG_RTC_HWCR &= ~RTC_HWCR_EALM )
 
-#define __rtc_status_hib_reset_occur()        ( (REG_RTC_HWRSR >> RTC_HWRSR_HR) & 0x1 )
-#define __rtc_status_ppr_reset_occur()        ( (REG_RTC_HWRSR >> RTC_HWRSR_PPR) & 0x1 )
-#define __rtc_status_wakeup_pin_waken_up()    ( (REG_RTC_HWRSR >> RTC_HWRSR_PIN) & 0x1 )
-#define __rtc_status_alarm_waken_up()        ( (REG_RTC_HWRSR >> RTC_HWRSR_ALM) & 0x1 )
+#define __rtc_status_hib_reset_occur()        ( REG_RTC_HWRSR & RTC_HWRSR_HR )
+#define __rtc_status_ppr_reset_occur()        ( REG_RTC_HWRSR & RTC_HWRSR_PPR )
+#define __rtc_status_wakeup_pin_waken_up()    ( REG_RTC_HWRSR & RTC_HWRSR_PIN )
+#define __rtc_status_alarm_waken_up()        ( REG_RTC_HWRSR & RTC_HWRSR_ALM )
 #define __rtc_clear_hib_stat_all()               ( REG_RTC_HWRSR = 0 )
 
 #define __rtc_get_scratch_pattern() 		(REG_RTC_HSPR)

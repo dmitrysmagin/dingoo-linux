@@ -360,7 +360,7 @@ endchoice
 
 config FB_JZ4750_LCD
 	tristate "JZ4750 LCD Controller support"
-	depends on FB_JZSOC && (SOC_JZ4750 || SOC_JZ4750D)
+	depends on FB_JZSOC && (SOC_JZ4750 || SOC_JZ4750D || SOC_JZ4750L)
 	---help---
 	   JZ4750 LCD Controller driver.
 	   JZ4750 LCD Controller support OSD function(refer jz4750_lcdc_spec.pdf).JZ4750 LCD OSD implement 2 framebuffer layers: foreground0 and foreground1. JZ4750 LCD driver support only foreground0 default.

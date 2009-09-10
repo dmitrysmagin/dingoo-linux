@@ -709,21 +709,31 @@ static int jz_mmc_slot_is_empty(int slot)
 	empty = (__msc1_card_detected(slot) == 0) ? 1 : 0;
 #else
 	empty = (__msc0_card_detected(slot) == 0) ? 1 : 0;
-
 #endif
+
 	if (empty) {
+
 		/* wait for card insertion */
+#ifdef CONFIG_SOC_JZ4750
 #ifdef CONFIG_MSC1_JZ4750
 		__gpio_as_irq_rise_edge(MSC_HOTPLUG_PIN);
 #else
 		__gpio_as_irq_fall_edge(MSC_HOTPLUG_PIN);
 #endif
+#else
+		__gpio_as_irq_fall_edge(MSC1_HOTPLUG_PIN);
+#endif
+
 	} else {
 		/* wait for card removal */
+#ifdef CONFIG_SOC_JZ4750
 #ifdef CONFIG_MSC1_JZ4750
 		__gpio_as_irq_fall_edge(MSC_HOTPLUG_PIN);
 #else
 		__gpio_as_irq_rise_edge(MSC_HOTPLUG_PIN);
+#endif
+#else
+		__gpio_as_irq_rise_edge(MSC1_HOTPLUG_PIN);
 #endif
 	}
 

@@ -106,7 +106,7 @@ int nr_partitions; /* Number of partitions */
 /* 
  * Define partitions for flash devices
  */
-#if defined(CONFIG_JZ4750_FUWA) || defined(CONFIG_JZ4750D_FUWA1) || defined(CONFIG_JZ4750D_CETUS)
+#if defined(CONFIG_JZ4750_FUWA) || defined(CONFIG_JZ4750D_FUWA1)
 struct mtd_partition partition_info[] = {
 	{name:"NAND BOOT partition",
 	 offset:0 * 0x100000,
@@ -165,7 +165,7 @@ static int partition_reserved_badblocks[] = {
 };				/* reserved blocks of mtd5 */
 #endif				/* CONFIG_JZ4750_FUWA */
 
-#if defined(CONFIG_JZ4750_APUS)
+#if defined(CONFIG_JZ4750_APUS) || defined(CONFIG_JZ4750D_CETUS)
 struct mtd_partition partition_info[] = {
 	{name:"NAND BOOT partition",
 	 offset:0 * 0x100000,
@@ -1589,6 +1589,7 @@ void copy_to_cpu_mode(struct mtd_info *mtd_cpu, struct mtd_info *mtd_dma, char u
 	struct nand_chip *chip_cpu = (struct nand_chip *)(&mtd_cpu[1]);
 	struct nand_chip *chip_dma = (struct nand_chip *)(&mtd_dma[1]);
 
+#ifdef CONFIG_MTD_HW_BCH_ECC
 	memcpy(mtd_cpu, mtd_dma, sizeof(struct mtd_info));
 	mtd_cpu->priv = chip_cpu;
 	memcpy(chip_cpu, chip_dma, sizeof(struct nand_chip));
@@ -1602,7 +1603,12 @@ void copy_to_cpu_mode(struct mtd_info *mtd_cpu, struct mtd_info *mtd_dma, char u
 		chip_cpu->ecc.read_page = nand_read_page_hwecc_bch_cpu;
 		chip_cpu->ecc.write_page = nand_write_page_hwecc_bch_cpu;
 	}
+#else
+	memcpy(mtd_cpu, mtd_dma, sizeof(struct mtd_info));
+	mtd_cpu->priv = chip_cpu;
+	memcpy(chip_cpu, chip_dma, sizeof(struct nand_chip));
 
+#endif
 	mtd_cpu->flags |= MTD_NAND_CPU_MODE;
 }
 
@@ -1718,6 +1724,7 @@ int __init jznand_init(void)
 	/* Scan to find existance of the device */
 	ret = nand_scan_ident(jz_mtd, nand_chips);
 
+#ifdef CONFIG_MTD_HW_BCH_ECC
 	if (!ret) {
 		if (this->planenum == 2) {
 			/* reset nand functions */
@@ -1737,6 +1744,7 @@ int __init jznand_init(void)
 			       jz_mtd->writesize, jz_mtd->oobsize, jz_mtd->erasesize);
 		}
 	}
+#endif
 
 	/* Determine whether all the partitions will use multiple planes if supported */
 	nr_partitions = sizeof(partition_info) / sizeof(struct mtd_partition);
@@ -1744,6 +1752,12 @@ int __init jznand_init(void)
 	for (i = 0; i < nr_partitions; i++) {
 		all_use_planes &= partition_info[i].use_planes;
 	}
+
+#if !defined(CONFIG_MTD_NAND_DMA)
+	for (i = 0; i < nr_partitions; i++) {
+		partition_info[i].cpu_mode = 1;
+	}
+#endif
 
 	if (!ret)
 		ret = nand_scan_tail(jz_mtd);
@@ -1754,6 +1768,7 @@ int __init jznand_init(void)
 		return -ENXIO;
 	}
 
+#ifdef CONFIG_MTD_HW_BCH_ECC
 #if defined(CONFIG_MTD_NAND_DMA)
 	jz4750_nand_dma_init(jz_mtd);
 
@@ -1763,14 +1778,15 @@ int __init jznand_init(void)
  	((struct nand_chip *) (&jz_mtd1[1]))->ecc.read_page = nand_read_page_hwecc_bch_cpu;
  	((struct nand_chip *) (&jz_mtd1[1]))->ecc.write_page = nand_write_page_hwecc_bch_cpu;
 #endif
-
-	copy_to_cpu_mode(jz_mtd_cpu, jz_mtd, 1);
-	copy_to_cpu_mode(jz_mtd_cpu1, jz_mtd1, 0);
+#endif
 
 	/* Register the partitions */
 	printk (KERN_NOTICE "Creating %d MTD partitions on \"%s\":\n", nr_partitions, jz_mtd->name);
 
 	if ((this->planenum == 2) && !all_use_planes) {
+		copy_to_cpu_mode(jz_mtd_cpu, jz_mtd, 1);
+		copy_to_cpu_mode(jz_mtd_cpu1, jz_mtd1, 0);
+
 		for (i = 0; i < nr_partitions; i++) {
 			if (partition_info[i].use_planes) {
 				if (partition_info[i].cpu_mode)
@@ -1787,6 +1803,8 @@ int __init jznand_init(void)
 	} else {
 		kfree(jz_mtd1);
 		kfree(jz_mtd_cpu1);
+		copy_to_cpu_mode(jz_mtd_cpu, jz_mtd, 0);
+
 		for (i = 0; i < nr_partitions; i++) {
 			if (partition_info[i].cpu_mode)
 				add_mtd_partitions(jz_mtd_cpu, &partition_info[i], 1);

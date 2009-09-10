@@ -1,8 +1,7 @@
-
 /*
- * linux/include/asm-mips/mach-jz4750d/ops.h
+ * linux/include/asm-mips/mach-jz4750l/ops.h
  *
- * JZ4750D register definition.
+ * JZ4750L register definition.
  *
  * Copyright (C) 2008 Ingenic Semiconductor Inc.
  *
@@ -12,8 +11,8 @@
  */
 
 
-#ifndef __JZ4750D_OPS_H__
-#define __JZ4750D_OPS_H__
+#ifndef __JZ4750L_OPS_H__
+#define __JZ4750L_OPS_H__
 
 /*
  * Definition of Module Operations
@@ -276,52 +275,19 @@ do {						\
 	REG_GPIO_PXSELC(p) = (1 << o);		\
 } while (0)
 
-/*
- * D0 ~ D31, A0 ~ A14, DCS0#, RAS#, CAS#, 
- * RDWE#, WE0#, WE1#, WE2#, WE3#, CKO#, CKE#
- */
-#define __gpio_as_sdram_32bit()			\
-do {						\
-	REG_GPIO_PXFUNS(0) = 0xffffffff;	\
-	REG_GPIO_PXSELC(0) = 0xffffffff;	\
-	REG_GPIO_PXPES(0) = 0xffffffff;		\
-	REG_GPIO_PXFUNS(1) = 0x03ff7fff;	\
-	REG_GPIO_PXSELC(1) = 0x03ff7fff;	\
-	REG_GPIO_PXPES(1) = 0x03ff7fff;		\
-} while (0)
-
-
-/*
- * D0 ~ D31, A0 ~ A14, DCS0#, RAS#, CAS#, 
- * RDWE#, WE0#, WE1#, WE2#, WE3#, CKO#, CKE#
- * !!!!DCS1#
- */
-#define __gpio_as_sdram_x2_32bit()		\
-do {						\
-	REG_GPIO_PXFUNS(0) = 0xffffffff;	\
-	REG_GPIO_PXSELC(0) = 0xffffffff;	\
-	REG_GPIO_PXPES(0) = 0xffffffff;		\
-	REG_GPIO_PXFUNS(1) = 0x03ff7fff;	\
-	REG_GPIO_PXSELC(1) = 0x03ff7fff;	\
-	REG_GPIO_PXPES(1) = 0x03ff7fff;		\
-	REG_GPIO_PXFUNS(4) = 0x10000000;	\
-	REG_GPIO_PXSELC(4) = 0x10000000;	\
-	REG_GPIO_PXPES(4) = 0x10000000;		\
-} while (0)
 
 /*
  * D0 ~ D15, A0 ~ A14, DCS0#, RAS#, CAS#, 
- * RDWE#, WE0#, WE1#, WE2#, WE3#, CKO#, CKE#
+ * RDWE#, WE0#, WE1#, CKO#, CKE#
  */
-#define __gpio_as_sdram_16bit()						\
-do {								        \
-		/* 32/16-bit data normal order */			\
-	REG_GPIO_PXFUNS(0) = 0x0000ffff;				\
-	REG_GPIO_PXSELC(0) = 0x0000ffff;				\
-	REG_GPIO_PXPES(0) = 0x0000ffff;					\
-	REG_GPIO_PXFUNS(1) = 0x03ff7fff;				\
-	REG_GPIO_PXSELC(1) = 0x03ff7fff;				\
-	REG_GPIO_PXPES(1) = 0x03ff7fff;					\
+#define __gpio_as_sdram_16bit()			\
+do {						\
+	REG_GPIO_PXFUNS(0) = 0x0000ffff;	\
+	REG_GPIO_PXSELC(0) = 0x0000ffff;	\
+	REG_GPIO_PXPES(0) = 0x0000ffff;		\
+	REG_GPIO_PXFUNS(1) = 0x03ff7fff;	\
+	REG_GPIO_PXSELC(1) = 0x03ff7fff;	\
+	REG_GPIO_PXPES(1) = 0x03ff7fff;		\
 } while (0)
 
 /*
@@ -334,12 +300,9 @@ do {		              						\
 	REG_GPIO_PXFUNS(0) = 0x000000ff; /* D0~D7 */			\
 	REG_GPIO_PXSELC(0) = 0x000000ff;				\
 	REG_GPIO_PXPES(0) = 0x000000ff;					\
-	REG_GPIO_PXFUNS(1) = 0x00008000; /* CLE(A15) */			\
-	REG_GPIO_PXSELC(1) = 0x00008000;				\
-	REG_GPIO_PXPES(1) = 0x00008000;					\
-	REG_GPIO_PXFUNS(2) = 0x00010000; /* ALE(A16) */			\
-	REG_GPIO_PXSELC(2) = 0x00010000;				\
-	REG_GPIO_PXPES(2) = 0x00010000;					\
+	REG_GPIO_PXFUNS(2) = 0x00000300; /* CLE(A15), ALE(A16) */	\
+	REG_GPIO_PXSELC(2) = 0x00000300;				\
+	REG_GPIO_PXPES(2) = 0x0000300;					\
 									\
 	REG_GPIO_PXFUNS(2) = 0x00200000 << ((n)-1); /* CSn */		\
 	REG_GPIO_PXSELC(2) = 0x00200000 << ((n)-1);			\
@@ -356,7 +319,6 @@ do {		              						\
 	REG_GPIO_PXDIRC(2) = 0x08000000;				\
 	REG_GPIO_PXPES(2) = 0x08000000;					\
 } while (0)
-
 
 /*
  * CS4#, RD#, WR#, WAIT#, A0 ~ A22, D0 ~ D7
@@ -415,9 +377,10 @@ do {	               							\
  */
 #define __gpio_as_uart0()			\
 do {						\
-	REG_GPIO_PXFUNS(3) = 0x30000000;	\
-	REG_GPIO_PXSELC(3) = 0x30000000;	\
-	REG_GPIO_PXPES(3) = 0x30000000;		\
+	REG_GPIO_PXFUNS(2) = 0x00003000;	\
+	REG_GPIO_PXTRGC(2) = 0x00003000;	\
+	REG_GPIO_PXSELS(2) = 0x00003000;	\
+	REG_GPIO_PXPES(2) = 0x00003000;		\
 } while (0)
 
 /*
@@ -489,16 +452,19 @@ do {						\
 } while (0)
 
 /*
- * LCD_R0~LCD_R7, LCD_G0~LCD_G7, LCD_B0~LCD_B7,
+ * LCD_D0~LCD_D17, LCD_D_R1, LCD_D_G0, LCD_D_G1, LCD_D_B1,
  * LCD_PCLK, LCD_HSYNC, LCD_VSYNC, LCD_DE
  */
 #define __gpio_as_lcd_24bit()			\
 do {						\
-	REG_GPIO_PXFUNS(3) = 0x0fffffff;	\
-	REG_GPIO_PXTRGC(3) = 0x0fffffff;	\
-	REG_GPIO_PXSELC(3) = 0x0c3fffff;	\
+	REG_GPIO_PXFUNS(3) = 0x003fffff;	\
+	REG_GPIO_PXTRGC(3) = 0x003fffff;	\
+	REG_GPIO_PXSELC(3) = 0x003fffff;	\
+	REG_GPIO_PXPES(3)  = 0x003fffff;	\
+	REG_GPIO_PXFUNS(3) = 0x03c00000;	\
+	REG_GPIO_PXTRGC(3) = 0x03c00000;	\
 	REG_GPIO_PXSELS(3) = 0x03c00000;	\
-	REG_GPIO_PXPES(3) = 0x0fffffff;		\
+	REG_GPIO_PXPES(3)  = 0x03c00000;	\
 } while (0)
 
 /*
@@ -507,6 +473,7 @@ do {						\
 #define __gpio_as_lcd_special()			\
 do {						\
 	REG_GPIO_PXFUNS(3) = 0x03C00000;	\
+	REG_GPIO_PXTRGC(3) = 0x03C00000;	\
 	REG_GPIO_PXSELC(3) = 0x03C00000;	\
 	REG_GPIO_PXPES(3)  = 0x03C00000;	\
 } while (0)
@@ -516,10 +483,16 @@ do {						\
  */
 #define __gpio_as_cim()				\
 do {						\
-	REG_GPIO_PXFUNS(4) = 0x00000fff;	\
-	REG_GPIO_PXSELC(4) = 0x00000fff;	\
-	REG_GPIO_PXPES(4)  = 0x00000fff;	\
+	REG_GPIO_PXFUNS(2) = 0x00000ff;		\
+	REG_GPIO_PXTRGS(2) = 0x00000ff;		\
+	REG_GPIO_PXSELC(2) = 0x00000ff;		\
+	REG_GPIO_PXPES(2)  = 0x00000ff;		\
+	REG_GPIO_PXFUNS(3) = 0x03c00000;	\
+	REG_GPIO_PXTRGS(3) = 0x03c00000;	\
+	REG_GPIO_PXSELC(3) = 0x03c00000;	\
+	REG_GPIO_PXPES(3)  = 0x03c00000;	\
 } while (0)
+
 
 /* 
  * SDATO, SDATI, BCLK, SYNC, SCLK_RSTN(gpio sepc) or
@@ -540,16 +513,11 @@ do {						\
  */
 #define __gpio_as_msc0_4bit()			\
 do {						\
-	REG_GPIO_PXFUNS(1) = 0x00008000;	\
-	REG_GPIO_PXTRGS(1) = 0x00008000;	\
-	REG_GPIO_PXSELC(1) = 0x00008000;	\
-	REG_GPIO_PXPES(1)  = 0x00008000;	\
-	REG_GPIO_PXFUNS(2) = 0x38030000;	\
-	REG_GPIO_PXTRGS(2) = 0x00010000;	\
-	REG_GPIO_PXTRGC(2) = 0x38020000;	\
-	REG_GPIO_PXSELC(2) = 0x08010000;	\
-	REG_GPIO_PXSELS(2) = 0x30020000;	\
-	REG_GPIO_PXPES(2)  = 0x38030000;	\
+	REG_GPIO_PXFUNS(2) = 0x38400300;	\
+	REG_GPIO_PXTRGC(2) = 0x38400300;	\
+	REG_GPIO_PXSELS(2) = 0x30400300;	\
+	REG_GPIO_PXSELC(2) = 0x08000000;	\
+	REG_GPIO_PXPES(2)  = 0x38400300;	\
 } while (0)
 
 
@@ -595,9 +563,10 @@ do {						\
  */
 #define __gpio_as_i2c()				\
 do {						\
-	REG_GPIO_PXFUNS(4) = 0x00003000;	\
-	REG_GPIO_PXSELC(4) = 0x00003000;	\
-	REG_GPIO_PXPES(4)  = 0x00003000;	\
+	REG_GPIO_PXFUNS(2) = 0x00000c00;	\
+	REG_GPIO_PXTRGC(2) = 0x00000c00;	\
+	REG_GPIO_PXSELS(2) = 0x00000c00;	\
+	REG_GPIO_PXPES(2)  = 0x00000c00;	\
 } while (0)
 
 /*
@@ -1438,10 +1407,8 @@ do {							\
 #define __aic_enable_loopback()	( REG_AIC_CR |= AIC_CR_ENLBF )
 #define __aic_disable_loopback() ( REG_AIC_CR &= ~AIC_CR_ENLBF )
 
-#define __aic_flush_fifo_rx()	( REG_AIC_CR |= AIC_CR_FLUSH_RX )
-#define __aic_flush_fifo_tx()	( REG_AIC_CR |= AIC_CR_FLUSH_TX )
-#define __aic_unflush_fifo_rx()	( REG_AIC_CR &= ~AIC_CR_FLUSH_RX )
-#define __aic_unflush_fifo_tx()	( REG_AIC_CR &= ~AIC_CR_FLUSH_TX )
+#define __aic_flush_fifo()	( REG_AIC_CR |= AIC_CR_FLUSH )
+#define __aic_unflush_fifo()	( REG_AIC_CR &= ~AIC_CR_FLUSH )
 
 #define __aic_enable_transmit_intr() \
   ( REG_AIC_CR |= (AIC_CR_ETFS | AIC_CR_ETUR) )
@@ -3055,10 +3022,10 @@ do {   \
 #define __rtc_enable_alarm_wakeup()        ( REG_RTC_HWCR |= RTC_HWCR_EALM )
 #define __rtc_disable_alarm_wakeup()        ( REG_RTC_HWCR &= ~RTC_HWCR_EALM )
 
-#define __rtc_status_hib_reset_occur()        ( REG_RTC_HWRSR & RTC_HWRSR_HR )
-#define __rtc_status_ppr_reset_occur()        ( REG_RTC_HWRSR & RTC_HWRSR_PPR )
-#define __rtc_status_wakeup_pin_waken_up()    ( REG_RTC_HWRSR & RTC_HWRSR_PIN )
-#define __rtc_status_alarm_waken_up()        ( REG_RTC_HWRSR & RTC_HWRSR_ALM )
+#define __rtc_status_hib_reset_occur()        ( (REG_RTC_HWRSR >> RTC_HWRSR_HR) & 0x1 )
+#define __rtc_status_ppr_reset_occur()        ( (REG_RTC_HWRSR >> RTC_HWRSR_PPR) & 0x1 )
+#define __rtc_status_wakeup_pin_waken_up()    ( (REG_RTC_HWRSR >> RTC_HWRSR_PIN) & 0x1 )
+#define __rtc_status_alarm_waken_up()        ( (REG_RTC_HWRSR >> RTC_HWRSR_ALM) & 0x1 )
 #define __rtc_clear_hib_stat_all()               ( REG_RTC_HWRSR = 0 )
 
 #define __rtc_get_scratch_pattern() 		(REG_RTC_HSPR)
@@ -3430,4 +3397,4 @@ do {				\
 #endif /* #if 0 */
 
 
-#endif /* __JZ4750D_OPS_H__ */
+#endif /* __JZ4750L_OPS_H__ */

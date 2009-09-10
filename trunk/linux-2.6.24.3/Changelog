@@ -10,7 +10,7 @@
        drivers/mtd/mtdpart.c
        drivers/mtd/mtdcore.c
 	
-* Vmalloc instead of kmalloc a block cache afor mtdblock-jz when the partition works
+* Vmalloc instead of kmalloc a block cache for mtdblock-jz when the partition works
   in cpu mode.
   Update Files:
        drivers/mtd/mtdblock-jz.c

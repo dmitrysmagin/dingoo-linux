@@ -151,7 +151,7 @@ int main (int argc, char *argv[])
 				("\rErasing %d Kibyte @ %llx -- %2u %% complete.",
 				 meminfo.erasesize / 1024, erase.start,
 				 (unsigned long long)
-				 erase.start * 100 / meminfo.size);
+				 (erase.start + meminfo.erasesize) * 100 / meminfo.size);
 		}
 		fflush(stdout);
 

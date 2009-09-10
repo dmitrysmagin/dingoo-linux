@@ -1,7 +1,7 @@
 /*
- * linux/arch/mips/jz4750d/proc.c
+ * linux/arch/mips/jz4750l/proc.c
  * 
- * /proc/jz/ procfs for jz4750d on-chip modules.
+ * /proc/jz/ procfs for jz4750l on-chip modules.
  * 
  * Copyright (C) 2006 Ingenic Semiconductor Inc.
  * Author: <jlwei@ingenic.cn>
@@ -260,15 +260,20 @@ static void ipu_add_wired_entry(unsigned long pid,
 	struct task_struct *g, *p;
 
 	/* We will lock an 4MB page size entry to map the 4MB reserved IPU memory */
-	entrylo0 = entrylo0 >> 6;
-	entrylo0 |= 0x6 | (0 << 3);
+	wired = read_c0_wired();
+	if (wired) return;
 
 	do_each_thread(g, p) {
 		if (p->pid == pid )
 			g_asid = p->mm->context[0];
 	} while_each_thread(g, p);
 	
+
 	local_irq_save(flags);
+
+	entrylo0 = entrylo0 >> 6;   /* PFN */
+	entrylo0 |= 0x6 | (0 << 3); /* Write-through cacheable, dirty, valid */
+
 	/* Save old context and create impossible VPN2 value */
 	old_ctx = read_c0_entryhi() & 0xff;
 	old_pagemask = read_c0_pagemask();
@@ -408,25 +413,20 @@ static int ipu_write_proc(struct file *file, const char *buffer, unsigned long c
 #if defined(DEBUG)
 	printk("ipu write count=%u\n", count);
 #endif
-	if (count == 41) {
-		for (i=0;i<12;i++) 
-			buf[i]=0;
+	if (count == (8*5+1)) {
+		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer+8*0, 8);
 		pid = simple_strtoul(buf, 0, 16);
-		for (i=0;i<12;i++) 
-			buf[i]=0;
+		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer+8*1, 8);
 		entrylo0 = simple_strtoul(buf, 0, 16);
-		for (i=0;i<12;i++) 
-			buf[i]=0;
+		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer+8*2, 8);
 		entrylo1 = simple_strtoul(buf, 0, 16);
-		for (i=0;i<12;i++) 
-			buf[i]=0;
+		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer+8*3, 8);
 		entryhi = simple_strtoul(buf, 0, 16);
-		for (i=0;i<12;i++) 
-			buf[i]=0;
+		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer+8*4, 8);
 		pagemask = simple_strtoul(buf, 0, 16);
 		
@@ -436,7 +436,8 @@ static int ipu_write_proc(struct file *file, const char *buffer, unsigned long c
 #endif		
 		ipu_add_wired_entry( pid, entrylo0, entrylo1, entryhi, pagemask);
 		return 41;
-	} else if ( count <= 9 ) {
+	}
+	else if ( count <= 8+1 ) {
 		for (i=0;i<12;i++) buf[i]=0;
 		strncpy(buf, buffer, 8);
 		val = simple_strtoul(buf, 0, 16);
@@ -445,30 +446,21 @@ static int ipu_write_proc(struct file *file, const char *buffer, unsigned long c
 			buf[i] = 0;
 		strncpy(buf, buffer, 10);
 		pid = simple_strtoul(buf, 0, 16);
-
 		for (i = 0; i < 12; i++) 
 			buf[i] = 0;
 		strncpy(buf, buffer + 11, 10);
 		entryhi = simple_strtoul(buf, 0, 16);//vaddr
-
 		for (i = 0; i < 12; i++) 
 			buf[i] = 0;
 		strncpy(buf, buffer + 22, 10);
 		entrylo0 = simple_strtoul(buf, 0, 16);//paddr
-
 		for (i = 0; i < 12; i++) 
 			buf[i] = 0;
 		strncpy(buf, buffer + 33, 10);
 		pagemask = simple_strtoul(buf, 0, 16);
-		//pagemask = 0x3ff << 13; /* Fixed to 4MB page size */
-		pagemask = 0xfff << 13; /* Fixed to 16MB page size */
-
+		pagemask = 0x3ff << 13; /* Fixed to 4MB page size */
 		ipu_add_wired_entry(pid, entrylo0, 0, entryhi, pagemask);
 		return 44;
-	} else if (count == 12) {
-		printk("\necho release tlb > /proc/jz/ipu\n");
-		ipu_del_wired_entry();
-		return 12;
 	} else {
 		printk("ipu write count error, count=%d\n.", (unsigned int)count);
 		return -1;
@@ -580,9 +572,11 @@ static int mmc_read_proc (char *page, char **start, off_t off,
 
 //#define DEBUG_IMEM 1
 
-#define IMEM0_MAX_ORDER 12		/* max 2^12 * 4096 = 16MB */
-static unsigned int jz_imem0_base;	/* physical base address of ipu memory */
-static unsigned int allocated_phys_addr0 = 0;
+#define IMEM_MAX_ORDER 10		/* max 2^10 * 4096 = 4MB */
+
+static unsigned int jz_imem_base;	/* physical base address of ipu memory */
+
+static unsigned int allocated_phys_addr = 0;
 
 /* 
  * Allocated buffer list
@@ -593,51 +587,36 @@ typedef struct imem_list {
 	struct imem_list *next;
 } imem_list_t;
 
-static struct imem_list *imem0_list_head = NULL; /* up sorted by phys_start */
-
-#define IMEM1_MAX_ORDER 11		/* max 2^11 * 4096 = 8MB */
-static unsigned int jz_imem1_base;	/* physical base address of ipu memory */
-static unsigned int allocated_phys_addr1 = 0;
-static struct imem_list *imem1_list_head = NULL; /* up sorted by phys_start */
+static struct imem_list *imem_list_head = NULL; /* up sorted by phys_start */
 
 #ifdef DEBUG_IMEM
 static void dump_imem_list(void)
 {
 	struct imem_list *imem;
 
-	printk("*** dump_imem_list 0x%x ***\n", (u32)imem0_list_head);
-	imem = imem0_list_head;
+	printk("*** dump_imem_list 0x%x ***\n", (u32)imem_list_head);
+	imem = imem_list_head;
 	while (imem) {
 		printk("imem=0x%x phys_start=0x%x phys_end=0x%x next=0x%x\n", (u32)imem, imem->phys_start, imem->phys_end, (u32)imem->next);
 		imem = imem->next;
 	}
-
-
-	printk("*** dump_imem_list 0x%x ***\n", (u32)imem1_list_head);
-	imem = imem1_list_head;
-	while (imem) {
-		printk("imem=0x%x phys_start=0x%x phys_end=0x%x next=0x%x\n", (u32)imem, imem->phys_start, imem->phys_end, (u32)imem->next);
-		imem = imem->next;
-	}
-
 }
 #endif
 
 /* allocate 2^order pages inside the 4MB memory */
-
-static int imem0_alloc(unsigned int order)
+static int imem_alloc(unsigned int order)
 {
 	int alloc_ok = 0;
 	unsigned int start, end;
 	unsigned int size = (1 << order) * PAGE_SIZE;
 	struct imem_list *imem, *imemn, *imemp;
 
-	allocated_phys_addr0 = 0;
+	allocated_phys_addr = 0;
 
-	start = jz_imem0_base;
-	end = start + (1 << IMEM0_MAX_ORDER) * PAGE_SIZE;
+	start = jz_imem_base;
+	end = start + (1 << IMEM_MAX_ORDER) * PAGE_SIZE;
 
-	imem = imem0_list_head;
+	imem = imem_list_head;
 	while (imem) {
 		if ((imem->phys_start - start) >= size) {
 			/* we got a valid address range */
@@ -656,7 +635,7 @@ static int imem0_alloc(unsigned int order)
 
 	if (alloc_ok) {
 		end = start + size - 1;
-		allocated_phys_addr0 = start;
+		allocated_phys_addr = start;
 
 		/* add to imem_list, up sorted by phys_start */
 		imemn = kmalloc(sizeof(struct imem_list), GFP_KERNEL);
@@ -667,10 +646,10 @@ static int imem0_alloc(unsigned int order)
 		imemn->phys_end = end;
 		imemn->next = NULL;
 
-		if (!imem0_list_head)
-			imem0_list_head = imemn;
+		if (!imem_list_head)
+			imem_list_head = imemn;
 		else {
-			imem = imemp = imem0_list_head;
+			imem = imemp = imem_list_head;
 			while (imem) {
 				if (start < imem->phys_start) {
 					break;
@@ -680,8 +659,8 @@ static int imem0_alloc(unsigned int order)
 				imem = imem->next;
 			}
 
-			if (imem == imem0_list_head) {
-				imem0_list_head = imemn;
+			if (imem == imem_list_head) {
+				imem_list_head = imemn;
 				imemn->next = imem;
 			}
 			else {
@@ -696,109 +675,16 @@ static int imem0_alloc(unsigned int order)
 #endif
 	return 0;
 }
-
-/* allocate 2^order pages inside the 4MB memory */
-static int imem1_alloc(unsigned int order)
-{
-	int alloc_ok = 0;
-	unsigned int start, end;
-	unsigned int size = (1 << order) * PAGE_SIZE;
-	struct imem_list *imem, *imemn, *imemp;
-
-	allocated_phys_addr1 = 0;
-
-	start = jz_imem1_base;
-	end = start + (1 << IMEM1_MAX_ORDER) * PAGE_SIZE;
-
-	imem = imem1_list_head;
-	while (imem) {
-		if ((imem->phys_start - start) >= size) {
-			/* we got a valid address range */
-			alloc_ok = 1;
-			break;
-		}
-
-		start = imem->phys_end + 1;
-		imem = imem->next;
-	}
-
-	if (!alloc_ok) {
-		if ((end - start) >= size)
-			alloc_ok = 1;
-	}
-
-	if (alloc_ok) {
-		end = start + size - 1;
-		allocated_phys_addr1 = start;
-
-		/* add to imem_list, up sorted by phys_start */
-		imemn = kmalloc(sizeof(struct imem_list), GFP_KERNEL);
-		if (!imemn) {
-			return -ENOMEM;
-		}
-		imemn->phys_start = start;
-		imemn->phys_end = end;
-		imemn->next = NULL;
-
-		if (!imem1_list_head)
-			imem1_list_head = imemn;
-		else {
-			imem = imemp = imem1_list_head;
-			while (imem) {
-				if (start < imem->phys_start) {
-					break;
-				}
-
-				imemp = imem;
-				imem = imem->next;
-			}
-
-			if (imem == imem1_list_head) {
-				imem1_list_head = imemn;
-				imemn->next = imem;
-			}
-			else {
-				imemn->next = imemp->next;
-				imemp->next = imemn;
-			}
-		}
-	}
-
-#ifdef DEBUG_IMEM
-	dump_imem_list();
-#endif
-	return 0;
-}
-
 
 static void imem_free(unsigned int phys_addr)
 {
 	struct imem_list *imem, *imemp;
 
-	imem = imemp = imem0_list_head;
+	imem = imemp = imem_list_head;
 	while (imem) {
 		if (phys_addr == imem->phys_start) {
-			if (imem == imem0_list_head) {
-				imem0_list_head = imem->next;
-			}
-			else {
-				imemp->next = imem->next;
-			}
-
-			kfree(imem);
-			break;
-		}
-
-		imemp = imem;
-		imem = imem->next;
-	}
-
-
-	imem = imemp = imem1_list_head;
-	while (imem) {
-		if (phys_addr == imem->phys_start) {
-			if (imem == imem1_list_head) {
-				imem1_list_head = imem->next;
+			if (imem == imem_list_head) {
+				imem_list_head = imem->next;
 			}
 			else {
 				imemp->next = imem->next;
@@ -821,28 +707,15 @@ static void imem_free_all(void)
 {
 	struct imem_list *imem;
 
-	imem = imem0_list_head;
+	imem = imem_list_head;
 	while (imem) {
 		kfree(imem);
 		imem = imem->next;
 	}
 
-	imem0_list_head = NULL;
+	imem_list_head = NULL;
 
-	allocated_phys_addr0 = 0;
-
-
-
-	imem = imem1_list_head;
-	while (imem) {
-		kfree(imem);
-		imem = imem->next;
-	}
-
-	imem1_list_head = NULL;
-
-	allocated_phys_addr1 = 0;
-
+	allocated_phys_addr = 0;
 
 #ifdef DEBUG_IMEM
 	dump_imem_list();
@@ -852,7 +725,7 @@ static void imem_free_all(void)
 /*
  * Return the allocated buffer address and the max order of free buffer
  */
-static int imem0_read_proc(char *page, char **start, off_t off,
+static int imem_read_proc(char *page, char **start, off_t off,
 			  int count, int *eof, void *data)
 {
 	int len = 0;
@@ -861,14 +734,14 @@ static int imem0_read_proc(char *page, char **start, off_t off,
 
 	unsigned int *tmp = (unsigned int *)(page + len);
 
-	start_addr = jz_imem0_base;
-	end_addr = start_addr + (1 << IMEM0_MAX_ORDER) * PAGE_SIZE;
+	start_addr = jz_imem_base;
+	end_addr = start_addr + (1 << IMEM_MAX_ORDER) * PAGE_SIZE;
 
-	if (!imem0_list_head)
+	if (!imem_list_head)
 		max_size = end_addr - start_addr;
 	else {
 		max_size = 0;
-		imem = imem0_list_head;
+		imem = imem_list_head;
 		while (imem) {
 			if (max_size < (imem->phys_start - start_addr))
 				max_size = imem->phys_start - start_addr;
@@ -890,7 +763,7 @@ static int imem0_read_proc(char *page, char **start, off_t off,
 		max_order = 0xffffffff;	/* No any free buffer */
 	}
 
-	*tmp++ = allocated_phys_addr0;	/* address allocated by 'echo n > /proc/jz/imem' */
+	*tmp++ = allocated_phys_addr;	/* address allocated by 'echo n > /proc/jz/imem' */
 	*tmp = max_order;		/* max order of current free buffers */
 
 	len += 2 * sizeof(unsigned int);
@@ -898,7 +771,7 @@ static int imem0_read_proc(char *page, char **start, off_t off,
 	return len;
 }
 
-static int imem0_write_proc(struct file *file, const char *buffer, unsigned long count, void *data)
+static int imem_write_proc(struct file *file, const char *buffer, unsigned long count, void *data)
 {
 	unsigned int val;
 
@@ -907,81 +780,12 @@ static int imem0_write_proc(struct file *file, const char *buffer, unsigned long
 	if (val == 0xff) {
 		/* free all memory */
 		imem_free_all();
-		ipu_del_wired_entry();
-	} else if ((val >= 0) && (val <= IMEM0_MAX_ORDER)) {
+	}
+	else if ((val >= 0) && (val <= IMEM_MAX_ORDER)) {
 		/* allocate 2^val pages */
-		imem0_alloc(val);
-	} else {			
-		/* free buffer which phys_addr is val */
-		imem_free(val);
+		imem_alloc(val);
 	}
-
-	return count;
-}
-
-/*
- * Return the allocated buffer address and the max order of free buffer
- */
-static int imem1_read_proc(char *page, char **start, off_t off,
-			  int count, int *eof, void *data)
-{
-	int len = 0;
-	unsigned int start_addr, end_addr, max_order, max_size;
-	struct imem_list *imem;
-
-	unsigned int *tmp = (unsigned int *)(page + len);
-
-	start_addr = jz_imem1_base;
-	end_addr = start_addr + (1 << IMEM1_MAX_ORDER) * PAGE_SIZE;
-
-	if (!imem1_list_head)
-		max_size = end_addr - start_addr;
-	else {
-		max_size = 0;
-		imem = imem1_list_head;
-		while (imem) {
-			if (max_size < (imem->phys_start - start_addr))
-				max_size = imem->phys_start - start_addr;
-
-			start_addr = imem->phys_end + 1;
-			imem = imem->next;
-		}
-
-		if (max_size < (end_addr - start_addr))
-			max_size = end_addr - start_addr;
-	}
-
-	if (max_size > 0) {
-		max_order = get_order(max_size);
-		if (((1 << max_order) * PAGE_SIZE) > max_size)
-		    max_order--;
-	}
-	else {
-		max_order = 0xffffffff;	/* No any free buffer */
-	}
-
-	*tmp++ = allocated_phys_addr1;	/* address allocated by 'echo n > /proc/jz/imem' */
-	*tmp = max_order;		/* max order of current free buffers */
-
-	len += 2 * sizeof(unsigned int);
-
-	return len;
-}
-
-static int imem1_write_proc(struct file *file, const char *buffer, unsigned long count, void *data)
-{
-	unsigned int val;
-
-	val = simple_strtoul(buffer, 0, 16);
-
-	if (val == 0xff) {
-		/* free all memory */
-		imem_free_all();
-		ipu_del_wired_entry();
-	} else if ((val >= 0) && (val <= IMEM1_MAX_ORDER)) {
-		/* allocate 2^val pages */
-		imem1_alloc(val);
-	} else {			
+	else {			
 		/* free buffer which phys_addr is val */
 		imem_free(val);
 	}
@@ -1049,58 +853,32 @@ static int __init jz_proc_init(void)
 	}
 
 	/*
-	 * Reserve a 16MB memory for IPU on JZ4750D.
+	 * Reserve a 4MB memory for IPU on JZ4750L.
 	 */
-	jz_imem0_base = (unsigned int)__get_free_pages(GFP_KERNEL, IMEM0_MAX_ORDER);
-	if (jz_imem0_base) {
+	jz_imem_base = (unsigned int)__get_free_pages(GFP_KERNEL, IMEM_MAX_ORDER);
+	if (jz_imem_base) {
 		/* imem (IPU memory management) */
 		res = create_proc_entry("imem", 0644, proc_jz_root);
 		if (res) {
-			res->read_proc = imem0_read_proc;
-			res->write_proc = imem0_write_proc;
+			res->read_proc = imem_read_proc;
+			res->write_proc = imem_write_proc;
 			res->data = NULL;
 		}
 
 		/* Set page reserved */
-		virt_addr = jz_imem0_base;
-		for (i = 0; i < (1 << IMEM0_MAX_ORDER); i++) {
+		virt_addr = jz_imem_base;
+		for (i = 0; i < (1 << IMEM_MAX_ORDER); i++) {
 			SetPageReserved(virt_to_page((void *)virt_addr));
 			virt_addr += PAGE_SIZE;
 		}
 
 		/* Convert to physical address */
-		jz_imem0_base = virt_to_phys((void *)jz_imem0_base);
+		jz_imem_base = virt_to_phys((void *)jz_imem_base);
 
 		printk("Total %dMB memory at 0x%x was reserved for IPU\n", 
-		       (unsigned int)((1 << IMEM0_MAX_ORDER) * PAGE_SIZE)/1000000, jz_imem0_base);
-	} else
-		printk("NOT enough memory for imem\n");
+		       (unsigned int)((1 << IMEM_MAX_ORDER) * PAGE_SIZE)/1000000, jz_imem_base);
+	}
 
-
-	jz_imem1_base = (unsigned int)__get_free_pages(GFP_KERNEL, IMEM1_MAX_ORDER);
-	if (jz_imem1_base) {
-		/* imem (IPU memory management) */
-		res = create_proc_entry("imem1", 0644, proc_jz_root);
-		if (res) {
-			res->read_proc = imem1_read_proc;
-			res->write_proc = imem1_write_proc;
-			res->data = NULL;
-		}
-
-		/* Set page reserved */
-		virt_addr = jz_imem1_base;
-		for (i = 0; i < (1 << IMEM1_MAX_ORDER); i++) {
-			SetPageReserved(virt_to_page((void *)virt_addr));
-			virt_addr += PAGE_SIZE;
-		}
-
-		/* Convert to physical address */
-		jz_imem1_base = virt_to_phys((void *)jz_imem1_base);
-
-		printk("Total %dMB memory1 at 0x%x was reserved for IPU\n", 
-		       (unsigned int)((1 << IMEM1_MAX_ORDER) * PAGE_SIZE)/1000000, jz_imem1_base);
-	} else
-		printk("NOT enough memory for imem1\n");
 	return 0;
 }
 

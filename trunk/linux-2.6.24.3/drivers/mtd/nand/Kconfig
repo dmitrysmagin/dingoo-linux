@@ -338,7 +338,7 @@ config MTD_NAND_JZ4740_SKIP_BBTSCAN
 
 config MTD_NAND_JZ4750
 	tristate "Support NAND Flash device on Jz4750 board"
-	depends on SOC_JZ4750 ||  SOC_JZ4750D
+	depends on SOC_JZ4750 ||  SOC_JZ4750D || SOC_JZ4750L
 	help
 	Support NAND Flash device on Jz4750 board
 

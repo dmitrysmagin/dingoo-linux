@@ -1729,7 +1729,7 @@ static int drain_adc(struct jz_i2s_controller_info *ctrl, int nonblock)
 }
 #endif
 
-#if defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D)
+#if defined(CONFIG_SOC_JZ4750) || defined(CONFIG_SOC_JZ4750D) || defined(CONFIG_SOC_JZ4750L)
 #define MAXDELAY 50000
 static int drain_adc(struct jz_i2s_controller_info *ctrl, int nonblock)
 {
@@ -1946,7 +1946,7 @@ static int jz_audio_release(struct inode *inode, struct file *file)
 		if(clear_codec_replay)
 			clear_codec_replay();
 #endif
-		__aic_flush_fifo();
+//		__aic_flush_fifo();
   
 		spin_lock_irqsave(&controller->ioctllock, flags);
 		controller->total_bytes = 0;
@@ -2218,7 +2218,7 @@ static int jz_audio_open(struct inode *inode, struct file *file)
 	mdelay(10);
 	REG_AIC_I2SCR = 0x10;
 	mdelay(20);
-	__aic_flush_fifo();
+//	__aic_flush_fifo();
 #endif
 
 	__i2s_enable();

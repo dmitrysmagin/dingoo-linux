@@ -109,6 +109,15 @@ config JZ4750D_CETUS
 	select SYS_SUPPORTS_LITTLE_ENDIAN
 	select SOC_JZ4750D
 
+config JZ4750L_F4750L
+	bool "Ingenic JZ4750L FPGA board"
+	select DMA_NONCOHERENT
+	select SYS_HAS_CPU_MIPS32_R1
+	select SYS_SUPPORTS_32BIT_KERNEL
+	select SYS_SUPPORTS_LITTLE_ENDIAN
+	select SOC_JZ4750L
+	select JZ_FPGA	
+
 config MACH_ALCHEMY
 	bool "Alchemy processor based machines"
 
@@ -819,6 +828,10 @@ config SOC_JZ4750
 	select JZSOC
 
 config SOC_JZ4750D
+	bool
+	select JZSOC
+
+config SOC_JZ4750L
 	bool
 	select JZSOC
 

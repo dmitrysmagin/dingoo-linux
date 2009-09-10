@@ -1,7 +1,7 @@
 /*
- *  linux/include/asm-mips/mach-jz4750d/board-cetus.h
+ *  linux/include/asm-mips/mach-jz4750l/board-f4750l.h
  *
- *  JZ4750D-based CETUS board ver 1.x definition.
+ *  JZ4750L-based F4750L board ver 1.x definition.
  *
  *  Copyright (C) 2008 Ingenic Semiconductor Inc.
  *
@@ -12,32 +12,33 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef __ASM_JZ4750D_CETUS_H__
-#define __ASM_JZ4750D_CETUS_H__
+#ifndef __ASM_JZ4750L_F4750L_H__
+#define __ASM_JZ4750L_F4750L_H__
+
+#define CONFIG_FPGA	 /* F4750L is an FPGA board */
 
 /*====================================================================== 
  * Frequencies of on-board oscillators
  */
-#define JZ_EXTAL		24000000
+//#define JZ_EXTAL		48000000  /* Main extal freq: 12 MHz */
+#define JZ_EXTAL		70000000
 #define JZ_EXTAL2		32768     /* RTC extal freq: 32.768 KHz */
-//#define CFG_DIV                 1         /* hclk=pclk=mclk=CFG_EXTAL/CFG_DIV, just for FPGA board */
+#define CFG_DIV                 1         /* hclk=pclk=mclk=CFG_EXTAL/CFG_DIV, just for FPGA board */
 
 
 /*====================================================================== 
  * GPIO
  */
-
-#define GPIO_SD0_VCC_EN_N	(32*4+0) /* CIM_D0 */
-#define GPIO_SD0_CD_N		(32*4+1) /* CIM_D1 */
-#define GPIO_SD0_WP		(32*4+2) /* CIM_D2 */
-#define GPIO_SD1_VCC_EN_N	(32*4+3) /* CIM_D3 */
-#define GPIO_SD1_CD_N		(32*4+4) /* CIM_D4 */
-
-#define GPIO_USB_DETE		(32*4+6) /* CIM_D6 */
-#define GPIO_DC_DETE_N		(32*4+8) /* CIM_MCLK */
-#define GPIO_CHARG_STAT_N	(32*4+10) /* CIM_VSYNC */
-#define GPIO_DISP_OFF_N		(32*4+18) /* SDATO */
-#define GPIO_LCD_VCC_EN_N	(32*4+19) /* SDATI */
+#define GPIO_SD0_VCC_EN_N	(32*2+10) /* GPC10 */
+#define GPIO_SD0_CD_N		(32*2+11) /* GPC11 */
+#define GPIO_SD0_WP		(32*2+12) /* GPC12 */
+//#define GPIO_SD1_VCC_EN_N	(32*2+13) /* GPC13 */
+#define GPIO_SD1_VCC_EN_N	(32*4+4) /* GPE4 */
+#define GPIO_SD1_CD_N		(32*2+14) /* GPC14 */
+#define GPIO_USB_DETE		102 /* GPD6 */
+#define GPIO_DC_DETE_N		103 /* GPD7 */
+#define GPIO_CHARG_STAT_N	111 /* GPD15 */
+#define GPIO_DISP_OFF_N		121 /* GPD25, LCD_REV */
 //#define GPIO_LED_EN       	124 /* GPD28 */
 
 #define GPIO_UDC_HOTPLUG	GPIO_USB_DETE
@@ -45,9 +46,11 @@
 /*====================================================================== 
  * LCD backlight
  */
-#define GPIO_LCD_PWM   		(32*4+22) /* GPE22 PWM2 */ 
-#define LCD_PWM_CHN 2    /* pwm channel */
+#define GPIO_LCD_PWM   		(32*2+14) /* GPE14 PWM4 */
+
+#define LCD_PWM_CHN 4    /* pwm channel */
 #define LCD_PWM_FULL 101
+
 /* 100 level: 0,1,...,100 */
 #define __lcd_set_backlight_level(n)	\
 do {					\
@@ -116,9 +119,9 @@ do {						\
 #define __msc1_card_detected(s)			\
 ({						\
 	int detected = 0;			\
-	if (!(__gpio_get_pin(GPIO_SD1_CD_N)))	\
+	if (__gpio_get_pin(GPIO_SD1_CD_N))	\
 		detected = 1;			\
 	detected;				\
 })
 
-#endif /* __ASM_JZ4750d_CETUS_H__ */
+#endif /* __ASM_JZ4750l_F4750L_H__ */
