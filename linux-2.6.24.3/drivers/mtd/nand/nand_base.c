@@ -88,7 +88,18 @@ static struct nand_ecclayout nand_oob_16 = {
 };
 
 static struct nand_ecclayout nand_oob_64 = {
-#if defined(CONFIG_MTD_HW_RS_ECC)
+#if defined(CONFIG_MTD_NAND_JZ4740_IPL_OOB)
+	.eccbytes = 36,
+	.eccpos = {
+		6,  7,  8,  9,				/* IPL code expects */
+		10, 11, 12, 13, 14, 15, 16, 17,		/* 36 byes of RS ECC */
+		18, 19, 20, 21, 22, 23, 24, 25,		/* at offset 6 */
+		26, 27, 28, 29, 30, 31, 32, 33,
+		34, 35, 36, 37, 38, 39, 40, 41},
+	.oobfree = {
+		{.offset = 42,
+		 .length = 22}}
+#elif defined(CONFIG_MTD_HW_RS_ECC)
 /* Reed-Solomon ECC */
 	.eccbytes = 36,
 	.eccpos = {
@@ -1926,8 +1937,17 @@ static int nand_do_write_ops(struct mtd_info *mtd, loff_mtd_t to,
 		chip->pagebuf = -1;
 
 	/* If we're not given explicit OOB data, let it be 0xFF */
-	if (likely(!oob))
+	if (likely(!oob)) {
 		memset(chip->oob_poi, 0xff, mtd->oobsize);
+#ifdef CONFIG_MTD_NAND_JZ4740_IPL_OOB
+		/* In IPL mode bytes at offsets 1-3 must be zero or */
+		/* the IPL code won't load them... this should probably */
+		/* be somewhere in jz4740_nand.c */
+		chip->oob_poi[1] = 0x00;
+		chip->oob_poi[2] = 0x00;
+		chip->oob_poi[3] = 0x00;
+#endif
+	}
 
 	while(1) {
 		int bytes = mtd->writesize;
@@ -2562,9 +2582,9 @@ static struct nand_flash_dev *nand_get_flash_type(struct mtd_info *mtd,
 		busw = type->options & NAND_BUSWIDTH_16;
 	}
 
-#ifdef CONFIG_MTD_NAND_JZ4740_FORCE_PAGE2K
+#ifdef CONFIG_MTD_NAND_JZ4740_IPL_OOB
 	if (mtd->writesize != 2048) {
-		printk(KERN_NOTICE "NAND page size forced to 2K\n");
+		printk(KERN_NOTICE "NAND page size forced to 2K for IPL mode\n");
 		mtd->writesize	= 2048;
 		mtd->oobsize	= mtd->writesize / 32;
 		mtd->erasesize	= mtd->writesize * 128;
