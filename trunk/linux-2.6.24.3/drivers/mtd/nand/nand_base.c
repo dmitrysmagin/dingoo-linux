@@ -1940,12 +1940,12 @@ static int nand_do_write_ops(struct mtd_info *mtd, loff_mtd_t to,
 	if (likely(!oob)) {
 		memset(chip->oob_poi, 0xff, mtd->oobsize);
 #ifdef CONFIG_MTD_NAND_JZ4740_IPL_OOB
-		/* In IPL mode bytes at offsets 1-3 must be zero or */
+		/* In IPL mode bytes at offsets 2-4 must be zero or */
 		/* the IPL code won't load them... this should probably */
 		/* be somewhere in jz4740_nand.c */
-		chip->oob_poi[1] = 0x00;
 		chip->oob_poi[2] = 0x00;
 		chip->oob_poi[3] = 0x00;
+		chip->oob_poi[4] = 0x00;
 #endif
 	}
 
