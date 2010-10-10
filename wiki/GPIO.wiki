@@ -80,8 +80,8 @@ Most of this port is also used for SDRAM.
 || 26 || SDRAM CS2# ||
 || 27 || SDRAM CS3# ||
 || 28 || SDRAM CS4# ||
-|| 29 || *GPIO input miniSD detection (1=inserted)* ||
-|| 30 || *GPIO input, used to sense battery charging (0=charging, TO BE VERIFIED)* ||
+|| 29 || *GPIO input card detection (1=inserted)* ||
+|| 30 || *GPIO input battery charge status (0=charging, 1=charge finished)* ||
 || 31 || SDRAM WE0# ||
 
 = Port C =
@@ -114,22 +114,22 @@ Pin usage:
 || 13 || LCD_D13 ||
 || 14 || LCD_D14 ||
 || 15 || LCD_D15 ||
-|| 16 || _*GPIO input ???*_ ||
+|| 16 || GPIO input unused ||
 || 17 || *GPIO input START button* ||
-|| 18 || LCD PCLK ||
+|| 18 || LCD PCLK (not connected to LCD, connected to CH7024 XCLK input) ||
 || 19 || *GPIO output RS# signal to LCD* ||
-|| 20 || LCD VSYNC ||
-|| 21 || _*GPIO, output=1 ???*_ ||
-|| 22 || _*GPIO input ???*_ || 
-|| 23 || _*GPIO input ???*_ ||
+|| 20 || LCD VSYNC (connected to LCD WR# signal) ||
+|| 21 || *GPIO output=1, connected to CH7024 LCD_DE signal, used when in TV out mode, GPIO output=1 to keep the CH7024 disabled when not in TV out mode) ||
+|| 22 || GPIO input unused || 
+|| 23 || GPIO input unused ||
 || 24 || SDRAM WE1# ||
 || 25 || SDRAM WE2# ||
 || 26 || SDRAM WE3# ||
-|| 27 || *GPIO output AUDIO mute (0=no sound)* ||
+|| 27 || *GPIO output internal speakers audio amplifiers shutdown (0=no sound)* ||
 || 28 || NAND FRE# ||
 || 29 || NAND FWE# ||
-|| 30 || _*GPIO input, maybe used to sense NAND busy?*_ ||
-|| 31 || _*GPIO input, configured as low level interrupt by the ROM IPL (initial program loader), probably unused thereafter*_ ||
+|| 30 || *GPIO input, connected to NAND read/busy signal* ||
+|| 31 || *There is not a PC31 pin, this is used to select between JTAG and UART functions, which share the same set of pins. PXSEL=1 selects UART* ||
 
 = Port D =
 
@@ -144,11 +144,11 @@ Pin usage:
 ||  0 || *GPIO input A button* ||
 ||  1 || *GPIO input B button* ||
 ||  2 || *GPIO input Y button* ||
-||  3 || _*GPIO input ???*_ ||
-||  4 || _*GPIO output=1 ???*_ ||
+||  3 || GPIO input, unused but tied to a test point according to schematic ||
+||  4 || GPIO output=1, unused but tied to a test point according to schematic ||
 ||  5 || *GPIO input DPAD LEFT* ||
 ||  6 || *GPIO input DPAD UP* ||
-||  7 || _*GPIO output AUDIO control (0=bad sound ONLY from earphones ???)*_ ||
+||  7 || *GPIO output=1, earphones audio MUTE control (0=mute, though actually just makes the sound bad)* ||
 ||  8 || miniSD CMD ||
 ||  9 || miniSD CLK ||
 || 10 || miniSD D0 ||
@@ -157,19 +157,19 @@ Pin usage:
 || 13 || miniSD D3 ||
 || 14 || *GPIO input LEFT SHOULDER button* ||
 || 15 || *GPIO input RIGHT SHOULDER button* ||
-|| 16 || _*GPIO input ???* (external driver present for sure because readback fails if configured as output)_ ||
+|| 16 || GPIO input, unused according to schematic (but seems that there's an external driver present because readback fails if configured as output) ||
 || 17 || *GPIO input SELECT button* ||
 || 18 || *GPIO input DPAD RIGHT* ||
 || 19 || *GPIO input X button* ||
-|| 20 || _*GPIO output=1 ???*_ ||
-|| 21 || _*GPIO output=0 ???*_ ||
-|| 22 || _*GPIO input ???*_ ||
-|| 23 || I2C SDA ||
-|| 24 || I2C SCK ||
-|| 25 || UART0 TXD ||
-|| 26 || UART1 RXD ||
-|| 27 || *GPIO input DPAD down* ||
+|| 20 || *GPIO output=1, battery charge control (1=enable)* (grounds a resistor which controls the charge current, note that this pin is also SSI data output and thus with some work could be used as a PWM output to control charge current) ||
+|| 21 || GPIO output=0, connectedto the mistery W35 chip ||
+|| 22 || *GPIO input HOLD position of power slider* ||
+|| 23 || I2C SDA, connected to TV and FM chips ||
+|| 24 || I2C SCK, connected to TV and FM chips ||
+|| 25 || UART0 TXD, serial console ||
+|| 26 || UART0 RXD, serial console ||
+|| 27 || *GPIO input DPAD DOWN* ||
 || 28 || *GPIO input USB power detection (1=power present)* ||
-|| 29 || _*POWER BUTTON, but FUN=1 ??? (jz4740.h says this pin does not have special functi0n !!!)*_ ||
-|| 30 || _*GPIO output=0 ???*_ ||
-|| 31 || *GPIO output LCD backlight (1=max, use as PWM7 to obtain different levels* ||
+|| 29 || *POWER BUTTON, but FUN=1 (jz4740.h says this pin does not have special function, but seems to be wrong since it's clearly WAKE_UP)* ||
+|| 30 || GPIO output=0, though depicted in the schematic as input from the mistery W35 chip ||
+|| 31 || *GPIO output LCD backlight (1=max, use as PWM7 to obtain different levels)* ||
