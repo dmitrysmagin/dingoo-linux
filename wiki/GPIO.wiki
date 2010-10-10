@@ -119,7 +119,7 @@ Pin usage:
 || 18 || LCD PCLK (not connected to LCD, connected to CH7024 XCLK input) ||
 || 19 || *GPIO output RS# signal to LCD* ||
 || 20 || LCD VSYNC (connected to LCD WR# signal) ||
-|| 21 || *GPIO output=1, connected to CH7024 LCD_DE signal, used when in TV out mode, GPIO output=1 to keep the CH7024 disabled when not in TV out mode) ||
+|| 21 || *GPIO output=1, connected to CH7024 LCD_DE signal, used when in TV out mode, GPIO output=1 to keep the CH7024 disabled when not in TV out mode)* ||
 || 22 || GPIO input unused || 
 || 23 || GPIO input unused ||
 || 24 || SDRAM WE1# ||
