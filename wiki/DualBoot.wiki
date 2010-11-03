@@ -130,7 +130,7 @@ This is what the SPL code does:
 
   * Disable LCD backlight (port 3 bit 31 = 0).
   * Initialize PLL and SDRAM.
-  * Load from NAND offset 0x00400000 to DRAM at address 0x80E00000.
+  * Load from NAND offset 0x00040000 (size 0x000C0000) to DRAM at address 0x80E00000.
   * Check that DWORD at 0x80E10004 is in the 0x00000000-0x01FFFFFF range.
   * *Jump to address 0x80E10008*.
 
