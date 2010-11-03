@@ -166,7 +166,7 @@ This is in my opinion the best option, since we are altering a single eraseblock
     * To boot the original firmware, load from NAND offset 0x00040000 into 0x80E00000 and jump to 0x80E10008. U-boot doesn't actually need to read the load size from DWORD at 0x00040000, just load a large enough chunk (for example 0x00080000 = two eraseblocks > 0x0051670, which is the actual size of the system loader).
     * To boot linux, use whatever options are needed (mmcinit, fatload, etc).
 
-*Note that here we MUST implement support for the nonstandard was of storing ECC information in the OOB where the system loader is stored.*
+*Note that here we MUST implement support for the nonstandard way of storing ECC information in the OOB where the system loader is stored.*
 
 == Patch the SPL ==
 
