@@ -13,7 +13,7 @@
 
 #include "delay.h"
 
-void delay (unsigned int ms) {
+void mdelay (unsigned int ms) {
 
 	int i;
 
