@@ -1,8 +1,6 @@
 #ifndef _SERIAL_H
 #define _SERIAL_H
 
-#include "jz4740.h"
-
 void serial_putc (const char c);
 void serial_puts (const char *s);
 int serial_getc (void);
