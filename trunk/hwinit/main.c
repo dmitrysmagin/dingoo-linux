@@ -10,20 +10,18 @@
 
 #include "jz4740.h"
 #include "config.h"
+
 #include "board.h"
 #include "serial.h"
 #include "delay.h"
+#include "jz4740_slcd.h"
 
 void c_main(void)
 {
-	int bsel;
-
 	gpio_init();
 	pll_init();
 	serial_init();
 	sdram_init();
-
-	bsel = __gpio_get_pin(BOOT_SELECT_PIN);	
 
 	mdelay(10);
 
