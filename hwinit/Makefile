@@ -6,10 +6,10 @@
 
 CROSS	:= mipsel-linux-
 
-CFLAGS	:= -Wall -O2 -mips32 -fno-pic -mno-abicalls
+CFLAGS	:= -Wall -O2 -mips32 -fno-pic -mno-abicalls -DCONFIG_JZ_SLCD_A320_ILI9331
 LDFLAGS	:= -nostdlib -EL -T target.ld 
 
-OBJS	= head.o main.o board.o serial.o delay.o
+OBJS	= head.o main.o board.o serial.o delay.o lzw.o logo.o jz4740_slcd.o
 
 all: hwinit.bin
 
