@@ -6,17 +6,32 @@
 
 CROSS	:= mipsel-linux-
 
-CFLAGS	:= -Wall -O2 -mips32 -fno-pic -mno-abicalls -DCONFIG_JZ_SLCD_A320_ILI9331
+CFLAGS	:= -Wall -O2 -mips32 -fno-pic -mno-abicalls
 LDFLAGS	:= -nostdlib -EL -T target.ld 
 
-OBJS	= head.o main.o board.o serial.o delay.o lzw.o logo.o jz4740_slcd.o
+OBJS	= head.o main.o board.o serial.o delay.o lzw.o logo.o
 
-all: hwinit.bin
+all: hwinit_ILI9325.bin hwinit_ILI9331.bin
 
-hwinit.bin: hwinit.elf
+hwinit_ILI9325.bin: hwinit_ILI9325.elf
 
-hwinit.elf: $(OBJS)
-	$(CROSS)ld $(LDFLAGS) $(OBJS) -o $@
+hwinit_ILI9331.bin: hwinit_ILI9331.elf
+
+
+
+hwinit_ILI9325.elf: $(OBJS) jz4740_slcd_ILI9325.o
+	$(CROSS)ld $(LDFLAGS) $^ -o $@
+
+hwinit_ILI9331.elf: $(OBJS) jz4740_slcd_ILI9331.o
+	$(CROSS)ld $(LDFLAGS) $^ -o $@
+
+jz4740_slcd_ILI9325.o: jz4740_slcd.c
+	$(CROSS)gcc -DCONFIG_JZ_SLCD_A320_ILI9325 $(CFLAGS) -c $< -o $@
+
+jz4740_slcd_ILI9331.o: jz4740_slcd.c
+	$(CROSS)gcc -DCONFIG_JZ_SLCD_A320_ILI9331 $(CFLAGS) -c $< -o $@
+
+
 
 %.bin: %.elf
 	$(CROSS)objcopy -O binary $< $@
