@@ -3,7 +3,7 @@
 
 #include "jz4740.h"
 
-void delay (unsigned int ms);
+void mdelay (unsigned int ms);
 
 #endif
 

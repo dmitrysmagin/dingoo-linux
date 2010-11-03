@@ -25,7 +25,7 @@ void c_main(void)
 
 	bsel = __gpio_get_pin(BOOT_SELECT_PIN);	
 
-	delay(10);
+	mdelay(10);
 
 	serial_puts("A320 hwinit by Ignacio Garcia Perez <iggarpe@gmail.com>\n");
 }
