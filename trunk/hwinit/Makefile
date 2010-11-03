@@ -13,10 +13,6 @@ OBJS	= head.o main.o board.o serial.o delay.o lzw.o logo.o
 
 all: hwinit_ILI9325.bin hwinit_ILI9331.bin
 
-hwinit_ILI9325.bin: hwinit_ILI9325.elf
-
-hwinit_ILI9331.bin: hwinit_ILI9331.elf
-
 
 
 hwinit_ILI9325.elf: $(OBJS) jz4740_slcd_ILI9325.o
