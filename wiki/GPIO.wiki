@@ -66,8 +66,8 @@ Most of this port is also used for SDRAM.
 || 12 || SDRAM A12 ||
 || 13 || SDRAM A13 ||
 || 14 || SDRAM A14 ||
-|| 15 || SDRAM A15/CL ||
-|| 16 || SDRAM A16/AL ||
+|| 15 || NAND CL ||
+|| 16 || NAND AL ||
 || 17 || *GPIO output CS# signal to LCD* ||
 || 18 || *GPIO output RESET# signal to LCD* ||
 || 19 || SDRAM DCS# ||
