@@ -13,7 +13,6 @@
 #include "board.h"
 #include "serial.h"
 #include "delay.h"
-#include "nand.h"
 
 void c_main(void)
 {
