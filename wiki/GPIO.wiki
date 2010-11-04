@@ -76,10 +76,10 @@ Most of this port is also used for SDRAM.
 || 22 || SDRAM RDWE#/BUFD# ||
 || 23 || SDRAM CKE ||
 || 24 || SDRAM CK0 ||
-|| 25 || SDRAM CS1# ||
-|| 26 || SDRAM CS2# ||
-|| 27 || SDRAM CS3# ||
-|| 28 || SDRAM CS4# ||
+|| 25 || NAND CS1# ||
+|| 26 || NAND CS2# ||
+|| 27 || NAND CS3# ||
+|| 28 || NAND CS4# ||
 || 29 || *GPIO input card detection (1=inserted)* ||
 || 30 || *GPIO input battery charge status (0=charging, 1=charge finished)* ||
 || 31 || SDRAM WE0# ||
