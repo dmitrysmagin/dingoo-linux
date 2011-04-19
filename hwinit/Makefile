@@ -11,7 +11,7 @@ LDFLAGS	:= -nostdlib -EL -T target.ld
 
 OBJS	= head.o main.o board.o serial.o delay.o lzw.o logo.o
 
-all: hwinit_ILI9325.bin hwinit_ILI9331.bin
+all: hwinit_ILI9325.bin hwinit_ILI9331.bin hwinit_ILI9338.bin
 
 
 
@@ -21,11 +21,19 @@ hwinit_ILI9325.elf: $(OBJS) jz4740_slcd_ILI9325.o
 hwinit_ILI9331.elf: $(OBJS) jz4740_slcd_ILI9331.o
 	$(CROSS)ld $(LDFLAGS) $^ -o $@
 
+hwinit_ILI9338.elf: $(OBJS) jz4740_slcd_ILI9338.o
+	$(CROSS)ld $(LDFLAGS) $^ -o $@
+
+
+
 jz4740_slcd_ILI9325.o: jz4740_slcd.c
 	$(CROSS)gcc -DCONFIG_JZ_SLCD_A320_ILI9325 $(CFLAGS) -c $< -o $@
 
 jz4740_slcd_ILI9331.o: jz4740_slcd.c
 	$(CROSS)gcc -DCONFIG_JZ_SLCD_A320_ILI9331 $(CFLAGS) -c $< -o $@
+
+jz4740_slcd_ILI9338.o: jz4740_slcd.c
+	$(CROSS)gcc -DCONFIG_JZ_SLCD_A320_ILI9338 $(CFLAGS) -c $< -o $@
 
 
 
