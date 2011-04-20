@@ -266,10 +266,7 @@ do {					\
 
 
 /*
- * Dingoo A320 IL9338 specific stuff.
- * Reverse engineered from CCPMP_CFG_A320_LCM_FAIR_ILI9331_320_240.DL
- * found in the second released unbricking tool.
- * Only 16 bit bus supported.
+ * Dingoo A320 IL9338 specific stuff (provided by ChinaChip).
  */
 
 #ifdef CONFIG_JZ_SLCD_A320_ILI9338
