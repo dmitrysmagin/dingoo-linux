@@ -38,6 +38,7 @@
 #define CONFIG_JZ_SLCD
 #define CONFIG_JZ_SLCD_A320_ILI9325
 //#define CONFIG_JZ_SLCD_A320_ILI9331
+//#define CONFIG_JZ_SLCD_A320_ILI9338
 
 /*
  * This will enable LCD support in the u-boot code
