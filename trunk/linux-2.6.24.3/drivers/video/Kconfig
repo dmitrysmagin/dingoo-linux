@@ -233,6 +233,11 @@ config JZ_SLCD_A320_ILI9331
 	---help---
 	Driver for ILI9331 smart LCD panel as connected in Dingoo A320 (newer model).
 
+config JZ_SLCD_A320_ILI9338
+	bool "Dingoo A320 ILI9338 smart LCD panel"
+	---help---
+	Driver for ILI9331 smart LCD panel as connected in Dingoo A320 (provided by ChinaChip).
+
 config JZ_SLCD_LGDP4551
 	bool "LG LGDP4551 Smart LCD panel"
 	---help---

@@ -265,6 +265,135 @@ do {					\
 #endif /* CONFIG_JZ_SLCD_A320_ILI9331 */
 
 
+/*
+ * Dingoo A320 IL9338 specific stuff.
+ * Reverse engineered from CCPMP_CFG_A320_LCM_FAIR_ILI9331_320_240.DL
+ * found in the second released unbricking tool.
+ * Only 16 bit bus supported.
+ */
+
+#ifdef CONFIG_JZ_SLCD_A320_ILI9338
+#define PIN_RS_N	(32*2+19)	/* Port 2 pin 19: RS# (register select, active low) */
+#define PIN_CS_N	(32*1+17)	/* Port 1 pin 17: CS# (chip select, active low) */
+#define PIN_RESET_N	(32*1+18)	/* Port 1 pin 18: RESET# (reset, active low) */
+
+#define	__slcd_special_pin_init()	\
+do {								\
+	__gpio_as_output(PIN_RS_N);		\
+	__gpio_set_pin(PIN_RS_N);		\
+	__gpio_as_output(PIN_CS_N);		\
+	__gpio_set_pin(PIN_CS_N);		\
+	__gpio_as_output(PIN_RESET_N);	\
+	__gpio_clear_pin(PIN_RESET_N);	\
+} while(0)
+
+#define __slcd_special_on() 		\
+do {								\
+	/* RESET pulse */				\
+	__gpio_clear_pin(PIN_RESET_N);	\
+	mdelay(10);						\
+	__gpio_set_pin(PIN_RESET_N);	\
+	mdelay(50);						\
+									\
+	/* Enable chip select */		\
+	__gpio_clear_pin(PIN_CS_N);		\
+									\
+	/* Black magic */				\
+	Mcupanel_Command(0x11);			\
+	mdelay(100);					\
+									\
+	Mcupanel_Command(0xCB);			\
+	Mcupanel_Data(0x01);			\
+									\
+	Mcupanel_Command(0xC0);			\
+	Mcupanel_Data(0x26);			\
+	Mcupanel_Data(0x01);			\
+	Mcupanel_Command(0xC1);			\
+	Mcupanel_Data(0x10);			\
+	Mcupanel_Command(0xC5);			\
+	Mcupanel_Data(0x10);			\
+	Mcupanel_Data(0x52);			\
+									\
+	Mcupanel_Command(0x26);			\
+	Mcupanel_Data(0x01);			\
+	Mcupanel_Command(0xE0);			\
+	Mcupanel_Data(0x10);			\
+	Mcupanel_Data(0x10);			\
+	Mcupanel_Data(0x10);			\
+	Mcupanel_Data(0x08);			\
+	Mcupanel_Data(0x0E);			\
+	Mcupanel_Data(0x06);			\
+	Mcupanel_Data(0x42);			\
+	Mcupanel_Data(0x28);			\
+	Mcupanel_Data(0x36);			\
+	Mcupanel_Data(0x03);			\
+	Mcupanel_Data(0x0E);			\
+	Mcupanel_Data(0x04);			\
+	Mcupanel_Data(0x13);			\
+	Mcupanel_Data(0x0E);			\
+	Mcupanel_Data(0x0C);			\
+	Mcupanel_Command(0XE1);			\
+	Mcupanel_Data(0x0C);			\
+	Mcupanel_Data(0x23);			\
+	Mcupanel_Data(0x26);			\
+	Mcupanel_Data(0x04);			\
+	Mcupanel_Data(0x0C);			\
+	Mcupanel_Data(0x04);			\
+	Mcupanel_Data(0x39);			\
+	Mcupanel_Data(0x24);			\
+	Mcupanel_Data(0x4B);			\
+	Mcupanel_Data(0x03);			\
+	Mcupanel_Data(0x0B);			\
+	Mcupanel_Data(0x0B);			\
+	Mcupanel_Data(0x33);			\
+	Mcupanel_Data(0x37);			\
+	Mcupanel_Data(0x0F);			\
+									\
+	Mcupanel_Command(0x2a);			\
+	Mcupanel_Data(0x00);			\
+	Mcupanel_Data(0x00);			\
+	Mcupanel_Data(0x01);			\
+	Mcupanel_Data(0x3f);			\
+									\
+	Mcupanel_Command(0x2b);			\
+	Mcupanel_Data(0x00);			\
+	Mcupanel_Data(0x00);			\
+	Mcupanel_Data(0x00);			\
+	Mcupanel_Data(0xef);			\
+									\
+	Mcupanel_Command(0x36);			\
+	Mcupanel_Data(0xe8);			\
+									\
+	Mcupanel_Command(0x3A);			\
+	Mcupanel_Data(0x05);			\
+									\
+	Mcupanel_Command(0x29);			\
+									\
+	Mcupanel_Command(0x2c);			\
+} while (0)
+
+/* TODO(IGP): make sure LCD power consumption is low in these conditions */
+
+#define __slcd_special_off()		\
+do {					\
+	/* Keep chip select disabled */	\
+	__gpio_set_pin(PIN_CS_N);	\
+	/* Keep RESET active */		\
+	__gpio_clear_pin(PIN_RESET_N);	\
+} while (0)
+
+#define __slcd_special_rs_enable()	\
+do {					\
+	__gpio_clear_pin(PIN_RS_N);	\
+} while (0)
+
+#define __slcd_special_rs_disable()	\
+do {					\
+	__gpio_set_pin(PIN_RS_N);	\
+} while(0)
+
+#endif /* CONFIG_JZ_SLCD_A320_ILI9338 */
+
 
 #ifdef CONFIG_JZ_SLCD_LGDP4551
 #define PIN_CS_N 	(32*2+18)	/* Chip select      :SLCD_WR: GPC18 */ 

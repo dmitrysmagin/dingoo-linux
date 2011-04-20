@@ -93,7 +93,7 @@ struct jzfb_info {
 };
 
 static struct jzfb_info jzfb = {
-#if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331)
+#if defined(CONFIG_JZ_SLCD_A320_ILI9325) || defined (CONFIG_JZ_SLCD_A320_ILI9331) || defined (CONFIG_JZ_SLCD_A320_ILI9338)
 	SLCD_CFG_CS_ACTIVE_LOW | SLCD_CFG_RS_CMD_LOW | SLCD_CFG_TYPE_PARALLEL,
 	320, 240, 16, 16, 16800000	/*16 bpp, 16 bus */
 #endif
@@ -215,6 +215,41 @@ static void Mcupanel_Command(UINT32 cmd) {
 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 
 		__slcd_special_rs_disable();
+		break;
+
+	default:
+		printk("Don't support %d bit Bus\n", jzfb.bus );
+		break;
+	}
+}
+
+/* Sent a data without command */
+static void Mcupanel_Data(UINT32 data)
+{
+	switch (jzfb.bus) {
+	case 8:
+		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		break;
+
+	case 9:
+		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
+		data = ((data << 6) & 0xfc0000) | ((data << 4) & 0xfc00) | ((data << 2) & 0xfc);
+
+		REG_SLCD_DATA = SLCD_DATA_RS_DATA | data;
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		break;
+
+	case 16:
+		REG_SLCD_DATA = SLCD_DATA_RS_DATA | (data&0xffff);
+		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
+		break;
+
+	case 18:
+		data = ((data & 0xff) << 1) | ((data & 0xff00) << 2);
+
+		REG_SLCD_DATA = SLCD_DATA_RS_DATA | ((data<<6)&0xfc0000)|((data<<4)&0xfc00) | ((data<<2)&0xfc);
+ 		while (REG_SLCD_STATE & SLCD_STATE_BUSY);
 		break;
 
 	default:
