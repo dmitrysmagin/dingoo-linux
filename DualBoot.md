@@ -1,0 +1,189 @@
+# Introduction #
+
+Dual boot refers to the ability to choose between the original firmware and linux when booting you A320.
+
+At present linux support on the A320 is usable for programming, and will soon be usable by final users, but hardware support is still far from being complete and thus linux is NOT yet a valid replacement for original firmware, so dual boot is a MUST.
+
+
+
+# Initial try #
+
+Dual boot instalation must be as easy as possible for non expert users, so the ideal way to install it would be by using the standard firmware upgrade procedure. As we have tools to alter the .HXF contents and we know that ccpmp.bin is the main firmware execeutable, altering that file seemed like an easy way to tap into the A320 original firmware boot process.
+
+The ccpmp.bin file is 5MB long and if you get a peek at its contents you will notice that a little more than the last 2MB are empty. Also we know that ccpmp.bin is loaded at address 0x80004000 and that control is transfered to address 0x80004008.
+
+This is what I did:
+
+  * Overwrite the first instructions of ccpmp.bin by a jump to location +3MB.
+  * At location +3MB place code that checks if the select button is pressed.
+  * If select button is NOT pressed, execute the instructions that were overwritten at the beginning of ccpmp.bin and jump to the point just past those instructions, so the normal boot process continues.
+  * If select button is pressed, jump to u-boot code placed at location +4MB. This u-boot code has been specially compiled for the memory address where I know this code will be loaded (0x80004000 + 4MB = 0x80404000).
+  * Modify the second DWORD of ccpmp.bin which is the load size used by the previous boot stage (whatever it is). I set it to 0x00500000 so I get sure the whole ccpmp.bin file is loaded into memory.
+
+It sort of worked: the normal boot process (select key not pressed) worked fine, and when I pressed the select key the u-boot code got executed, but at some point it caused a TLB exception:
+
+```
+NAND Booting...ECD755B6..
+loader size = 0x00051670
+..
+OK
+NAND Loading...
+get ccpmp_config ok!!!
+ccpmp_config.firmware_name = A320.HXF. ccpmp_config.update_key = 123, ccpmp_con.
+loader normal mode...
+Creating ftl device...
+id:EC D7 55 B6 78
+id:00 00 00 00 00
+id:00 00 00 00 00
+id:00 00 00 00 00
+OK.
+usb_connect = 1
+into lcd_init.
+loader -- into lcd_init.
+into init_lcd_gpio.
+out init_lcd_gpio.
+loader -- init_lcd_gpio ok.
+into Init_LCM_MOUDLE_ILI9325!!!
+out Init_LCM_MOUDLE_ILI9325!!!
+loader -- init_lcd_register ok.
+loader -- out lcd_init.
+Start decode...
+OK 153602.
+out lcd_init.
+get_lcd_brightness -- value = 3.
+len is 0x  500000
+os_len = 0x  500000. checksum = 0x26f75489.
+1 - ret = 0
+2 - ret = 1
+Run image...
+
+
+U-Boot 1.1.6 (May 12 2009 - 02:54:16)
+
+Board: Dingoo A320 (CPU Speed 336 MHz)
+DRAM:  32 MB
+Flash:  0 kB
+Using default environment
+
+In:    serial
+Out:   serial
+Err:   serial
+Hit any key to stop autoboot:  0 
+MMC card found
+=============================================================
+Exception:
+SP:81EAAA28
+EPC:81FBBEE8
+CAUSE:00800008  TLB load
+Reg dump:
+ ra = 81FC1D38 fp = 00000027 gp = 81FCBDD0 t9 = 81FBBED8
+ t8 = FFFFFFFF s7 = 00000003 s6 = 00000000 s5 = 0000005C
+ s4 = B0010168 s3 = B0010158 s2 = 81FCE490 s1 = 81FCE490
+ s0 = 00000000 t7 = 00000000 t6 = 00000000 t5 = 81FCA844
+ t4 = 00000020 t3 = 81EAAD48 t2 = 00000004 t1 = 00000009
+ t0 = 81FCDFBC a3 = 00000000 a2 = 00000004 a1 = 00000000
+ a0 = 81FCDFBC v1 = 00000012 v0 = 00000000 AT = 00000000
+ LO = 00001CD1 HI = 00003000 ST = 10000402 EPC = 81FBBEE8
+```
+
+The exception handler is obviously not part of my u-boot code but part of a previous boot stage, which seems to have gone quite far initializing the execution environment, including the MMU. u-boot expects an after-reset execution environment and fails. I tried embedding the kernel image itself into ccpmp.bin instead of u-boot but the kernel also seems to have problems with an already initialized MMU.
+
+So, either we find a way to deinitialize the MMU to a state where u-boot or the kernel can execute without problems, or find an earlier point to tap into the boot process.
+
+
+
+# Looking at the contents of NAND flash #
+
+The ccpmp.bin patch approach had the great advantage of using the standard firmware upgrade procedure to write to the NAND flash. If we need to tap into the boot process at an earlier stage, we need to see what's in the NAND flash.
+
+First, note that the IPL (initial program loader) that gets executed from ROM on boot only handles 512 and 2048 NAND page sizes. I've seen a picture from an A320 with two 2GB, 2048 page size NAND chips, but mine and some other latest A320 do have a single 4GB, 4096 page size NAND chip. Keep in mind that the IPL will load 8KB of code to the instruction caché from the first 4 pages of NAND flash, but will do so assuming that the page size is 2048.
+
+My A320 has a K9LBG08U0M chip, which is 4GB, 4096 bytes page size, 128 pages per erase block, 2 planes. This means that the erase block size is 512KB (4KB x 128).
+
+You can examine the NAND flash contents by using the USB\_Boot.exe tool provided by Ingenic [here](ftp://ftp.ingenic.cn/3sw/00tools/usb_boot/tools/usbboot1.4b-tools.zip). You need a configuration file that you can find in the download section (USBBoot.cfg). Note that this configuration file is set up for my hardware (single 4GB flash chip) and your A320 might be one of the earlier ones with two 2GB chips.
+
+This is what I've found out so far:
+
+| **Pages** | **Data area** | **OOB area** |
+|:----------|:--------------|:-------------|
+| 0-3 | "Normal" data in first 2KB of page, OOB-like data at the start of second 2KB | Erased |
+| 4-127 | Erased | Erased |
+| 128-511 | "Normal" data in first 2KB of page, OOB-like data at the start of second 2KB | Erased |
+| 512-513 | Erased | OOB data, unknown format |
+| 514-639 | Erased | Erased |
+| 640- | Normal data using the whole 4KB page | OOB data, unknown format |
+
+Notes:
+  * Actually, the 128-511 page area contains data only from page 128 to 290, rest is erased.
+
+Conclusions:
+  * The first four pages contain the SPL (secondary program loader), but it is stored in the first 2KB of each page, since the IPL will think this is a 2KB page size NAND. I guess it will treat the first bytes if the second 2KB half as if it was OOB data.
+  * The rest of this erase block is empty.
+  * Pages 128-512 contain the OS, and it is loaded by the SPL just like the IPL did: thinking this is a 2KB page size NAND, thus the data is in the first 2KB of each page and the first bytes of the second 2KB page are treated as if it was OOB data.
+  * The erase block corresponding to pages 512-639 is empty except for OOB data in pages 512-513 (REAL OOB DATA, placed in the OOB area, not in the second 2KB of the page data). Unknown purpose. Might be a parameter area, startup LCD backlight brightness and such?.
+  * Page 640 and up contain data using the whole 4KB page and the OOB area is used too.
+
+Obviously the SPL in pages 0-3 loads the OS in pages 128-511. We should tap into the boot process as soon as possible to avoid the problems I faced when using the ccpmp.bin patch approach, so this is what I intend to do: patch the SPL code to check for select key. If pressed, load OS from pages 4-127 instead of 128-511. And place customized code (u-boot probably) in pages 4-127, using only the first 2KB of each pages because that's what the SPL will load. That means custom code can be at most 248KB long.
+
+# Disassemblying the SPL code (NAND pages 0-3) #
+
+This is what the SPL code does:
+
+  * Disable LCD backlight (port 3 bit 31 = 0).
+  * Initialize PLL and SDRAM.
+  * Load from NAND offset 0x00040000 (size 0x000C0000) to DRAM at address 0x80E00000.
+  * Check that DWORD at 0x80E10004 is in the 0x00000000-0x01FFFFFF range.
+  * **Jump to address 0x80E10008**.
+
+These are the contens of flash, **read using 2KB page size**
+
+| 0x00000000-0x00001FFF | Secondary Program Loader (SPL) |
+|:----------------------|:-------------------------------|
+| 0x00040000-0x00091670 | System loader |
+
+The system loader is read by the SPL into DRAM at address 0x80E00000. The size of the system loader is found in the first DWORD. The format of the system loader is as follows:
+
+| 0x00040000 (DWORD) | Size of system loader (=0x00051670) |
+|:-------------------|:------------------------------------|
+| 0x00040004 (DWORD) | UNKNOWN (=0x000905D7) |
+| 0x00040008 (DWORD) | Size of hardware initialization .DL (=0x00002A40) |
+| 0x0004000C, size in (0x00040008) | Hardware initialization .DL (as found in the unbricking tool) |
+| 0x00050000 (DWORD) | UNKNOWN (=0x0009614D) |
+| 0x00050004 (DWORD) | Size of actual system loader code (=0x00041670) |
+| 0x00050008, size in (0x00050004) | Actual system loader code (entry point) |
+
+The SPL reads the size it must load from DWORD at 0x00040000. Note that the system loader execution entry point is at NAND offset 0x00050008: the 0x00040000-0x0004FFFF area is reserved to store the hardware initialization .DL. This is just like a initramfs in linux: it is loaded by the bootloader and left there to be used by the system loader code.
+
+**IMPORTANT: looks like the ECC position in OOB for the NAND area where the system loader is stored is NON STANDARD.**
+
+# How to tap into the boot process? #
+
+Once it is clear how the SPL works, we have several choices (remember that we are treating the NAND as if it was 2KB page size, though it is actually 4KB, because the ROM IPL code thinks it is 2KB):
+
+## Replace the SPL ##
+
+This is in my opinion the best option, since we are altering a single eraseblock. The drawback is that we are not using the original firmware SPL and thus we must make sure we perform the same actions it does whatever they are.
+
+  * Place the u-boot SPL and u-boot itself in the first eraseblock (0x00000000-0x0003FFFF).
+  * Modify u-boot to use different boot options depending on SELECT key status:
+    * To boot the original firmware, load from NAND offset 0x00040000 into 0x80E00000 and jump to 0x80E10008. U-boot doesn't actually need to read the load size from DWORD at 0x00040000, just load a large enough chunk (for example 0x00080000 = two eraseblocks > 0x0051670, which is the actual size of the system loader).
+    * To boot linux, use whatever options are needed (mmcinit, fatload, etc).
+
+**Note that here we MUST implement support for the nonstandard way of storing ECC information in the OOB where the system loader is stored.**
+
+## Patch the SPL ##
+
+Patch the SPL code and (if SELECT key pressed) trick it into loading u-boot instead of the system loader. This is feasible because the code modification is minimal (we just change the load offset). The downside is that we must store the u-boot code in the same format than the system loader, making the u-boot code larger at least by 0x00010008 bytes (~64KB). Current u-boot code + 64KB doesn't fit in a single eraseblock, so this option is discarded.
+
+The main advantage would be that me don't need to make sure to do all the initialization the SPL does because we are actually executing the SPL code.
+
+**Note that we would need a tool able to generate ECC in the nonstatdard format used for the system loader storage area.**
+
+## Replace the system loader ##
+
+Move the system loader code somewhere else and place u-boot there, keeping the system loader layout and format.
+
+This is in principle a no-brainer, but has a big problem: the u-boot code gets loaded in memory where the original system loader should be, and then if normal boot is selected, the u-boot code must load the original system loader and overwrite itself. Well, actually it should be something like "move myself somewhere else and load system loader where I was".
+
+
+**Note that we would need a tool able to generate ECC in the nonstatdard format used for the system loader storage area.**

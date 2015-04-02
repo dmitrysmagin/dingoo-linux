@@ -1,0 +1,1 @@
+Running linux on the Dingoo A320 handheld gaming console, based on Ingenic JZ4740 system-on-chip.
